@@ -23,12 +23,7 @@ def delete_despatch_advice(despatch_id):
     """
 
     try:
-        # Validate despatch_id is a positive integer and return error message if not
-        if not despatch_id.isdigit():
-            return build_response(404, JSON_TYPE, "Not Found")
-
         # Try delete the despatch advice using despatch_id
-        despatch_id = int(despatch_id)
         response = dynamodb_table.delete_item(
             Key={'despatch_id': despatch_id},
             ReturnValues='ALL_OLD'

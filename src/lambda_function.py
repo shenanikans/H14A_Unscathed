@@ -37,10 +37,11 @@ def lambda_handler(event, context):
         if http_method == 'DELETE' and path.startswith(DESPATCH_ADVICE_PATH) and pathParameters:
             despatch_id = event['pathParameters'].get('despatch_id')
 
-            # Validate despatch_id is provided
-            if not despatch_id:
+            # Validate despatch_id is provided and is a positive integer
+            if not despatch_id or not despatch_id.isdigit():
                 response = build_response(404, JSON_TYPE, "Not Found")
             else:
+                despatch_id = int(despatch_id)
                 response = delete_despatch_advice(despatch_id)
         else:
             response = build_response(404, JSON_TYPE, 'Not Found')
