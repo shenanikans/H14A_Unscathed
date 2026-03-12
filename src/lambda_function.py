@@ -15,10 +15,12 @@ def lambda_handler(event, context):
   path = event.get('path')
   if http_method == 'GET' and path == HEALTH_CHECK_PATH:
     try:
-      dynamodb_table.table_status #FIXXXXXXX
-      response = build_response(200, JSON_TYPE, 'Service is operational')
-
+      status = dynamodb_table.table_status
+      if status == 'ACTIVE':
+        response = build_response(200, JSON_TYPE, 'Service is operational')
+      else:
+        response = build_response(503, JSON_TYPE, 'Table not ready')
     except Exception as e:
       print('Error:', e)
-      response = build_response(400, JSON_TYPE, 'Error processing request')
+      response = build_response(503, JSON_TYPE, 'Error processing request')
     return response
