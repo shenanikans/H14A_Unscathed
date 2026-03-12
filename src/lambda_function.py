@@ -35,7 +35,7 @@ def lambda_handler(event, context):
 
         # Determine the API endpoint requested and call the appropriate function 
         if http_method == 'DELETE' and path.startswith(DESPATCH_ADVICE_PATH) and pathParameters:
-            despatch_id = event['pathParameters'].get('despatch_id')
+            despatch_id = event['pathParameters'].get('despatch-id')
 
             # Validate despatch_id is provided and is a positive integer
             if not despatch_id or not despatch_id.isdigit():
