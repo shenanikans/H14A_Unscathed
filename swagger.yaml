@@ -5,7 +5,6 @@ info:
   description: |-
     This is a SaaS cloud model API that can be used to process and manage Despatch Advice business documents. The service accepts UBL-standard Order and Despatch Advice documents to generate, retrieve, update, and delete Despatch Advice documents.
 servers:
-  # Added by API Auto Mocking Plugin
   - description: Despatch Advice Processing API Servers
     url: https://virtserver.swaggerhub.com/unsw-7ef/despatch-advices/1.0.0
 tags:
@@ -119,7 +118,7 @@ paths:
               examples:
                 DespatchAdviceNotFound:
                   value:
-                    message: "Despatch advice not found"
+                    message: "Despatch advice 1 not found"
         '500':
           description: Server error
           content:
@@ -161,7 +160,7 @@ paths:
               examples:
                 DespatchAdviceNotFound:
                   value:
-                    message: "Despatch advice not found"
+                    message: "Despatch advice 1 not found"
                 InvalidElementType:
                   value:
                     message: "Invalid element type provided"
@@ -200,7 +199,7 @@ paths:
               examples:
                 DespatchAdviceNotFound:
                   value:
-                    message: "Despatch advice not found"
+                    message: "Despatch advice 1 not found"
                 InvalidElementType:
                   value:
                     message: "Invalid element type provided"
