@@ -1,6 +1,7 @@
 # Import required modules for the API
 import json
 import boto3
+from db import dynamodb_table
 from botocore.exceptions import ClientError
 
 # Import functions and constants that perform the core data processing
@@ -12,16 +13,7 @@ from delete_despatch import delete_despatch_advice
 BASE_URL = '/api/despatch'
 HEALTH_CHECK_PATH = BASE_URL + '/health'
 DESPATCH_ADVICE_PATH = BASE_URL + '/despatch-advice'
-import boto3
-from db import dynamodb_table
 
-# Import functions and constants that perform the core data processing
-from helper_functions import build_response
-from constants import JSON_TYPE
-
-# Initialise URL constants
-BASE_URL = '/api/despatch'
-HEALTH_CHECK_PATH = BASE_URL + '/health'
 
 def lambda_handler(event, context):
     """Handles requests coming from API Gateway and calls the appropriate route to manage despatch advices stored in the DynamoDB table.
@@ -62,16 +54,31 @@ def lambda_handler(event, context):
         response = build_response(400, JSON_TYPE, 'Error processing request')
    
     return response
-  http_method = event.get('httpMethod')
-  path = event.get('path')
-  if http_method == 'GET' and path == HEALTH_CHECK_PATH:
-    try:
-      status = dynamodb_table.table_status
-      if status == 'ACTIVE':
-        response = build_response(200, JSON_TYPE, 'Service is operational')
-      else:
-        response = build_response(503, JSON_TYPE, 'Table not ready')
-    except Exception as e:
-      print('Error:', e)
-      response = build_response(503, JSON_TYPE, 'Error processing request')
-    return response
+
+
+
+def healthCheck(event, context):
+    """Handles health check requests from API Gateway by verifying that the service and DynamoDB table are operational.
+    Args:
+        Event: JSON-formatted data structure sent by API Gateway that contains request
+               information such as the HTTP method and request path.
+        Context: Object that provides runtime information about the function
+
+    Returns:
+        Response: JSON object structure containing the HTTP statusCode, Content-Type,
+                  and body message.
+    """
+  
+    http_method = event.get('httpMethod')
+    path = event.get('path')
+    if http_method == 'GET' and path == HEALTH_CHECK_PATH:
+      try:
+        status = dynamodb_table.table_status
+        if status == 'ACTIVE':
+          response = build_response(200, JSON_TYPE, 'Service is operational')
+        else:
+          response = build_response(503, JSON_TYPE, 'Table not ready')
+      except Exception as e:
+        print('Error:', e)
+        response = build_response(503, JSON_TYPE, 'Error processing request')
+      return response
