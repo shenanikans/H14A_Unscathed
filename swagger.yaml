@@ -1,0 +1,390 @@
+openapi: 3.0.4
+info:
+  version: "1.0.0"
+  title: Despatch Advice Processing API
+  description: |-
+    This is a SaaS cloud model API that can be used to process and manage Despatch Advice business documents. The service accepts UBL-standard Order and Despatch Advice documents to generate, retrieve, update, and delete Despatch Advice documents.
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: Despatch Advice Processing API Servers
+    url: https://virtserver.swaggerhub.com/unsw-7ef/despatch-advices/1.0.0
+tags:
+  - name: Paths
+paths:
+  /api/despatch/health:
+    get:
+      tags:
+        - Paths
+      summary: Check the aliveness of the service
+      description: Check whether the state of the server is operational.
+      operationId: checkHealth
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthSuccess'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+  /api/despatch/despatch-advice:
+    post:
+      tags:
+        - Paths
+      summary: Generate a despatch advice document
+      description: Generate a despatch advice document using an order document and user-provided inputs.
+      operationId: generateDespatch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerationInput'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/DespatchDoc'
+        '400':
+          description: Bad Request - Multiple possible causes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+              examples:
+                MissingRequiredField:
+                  value:
+                    message: "Missing required field"
+                InvalidElementType:
+                  value:
+                    message: "Invalid element type provided"
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+    get:
+      tags:
+        - Paths
+      summary: Retrieve all despatch advice documents
+      description: Retrieve all despatch advice documents stored in the database.
+      operationId: retrieveAllDespatches
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/DespatchDoc'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+  /api/despatch/despatch-advice/{despatch-id}:
+    get:
+      tags:
+        - Paths
+      summary: Retrieve a despatch advice document
+      description: Given a despatch advice ID, retrieve the corresponding despatch advice document stored in the database.
+      operationId: retrieveDespatchById
+      parameters:
+        - name: despatch-id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 565899
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/DespatchDoc'
+        '400':
+          description: Despatch advice not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+              examples:
+                DespatchAdviceNotFound:
+                  value:
+                    message: "Despatch advice not found"
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+    put:
+      tags:
+        - Paths
+      summary: Update a despatch advice document
+      description: Given a despatch advice ID, update the corresponding despatch advice document stored in the database.
+      operationId: updateDespatchById
+      parameters:
+        - name: despatch-id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 565899
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFields'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/DespatchDoc'
+        '400':
+          description: Despatch advice not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+              examples:
+                DespatchAdviceNotFound:
+                  value:
+                    message: "Despatch advice not found"
+                InvalidElementType:
+                  value:
+                    message: "Invalid element type provided"
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+    delete:
+      tags:
+        - Paths
+      summary: Delete a despatch advice document
+      description: Given a despatch advice ID, delete the corresponding despatch advice document stored in the database.
+      operationId: deleteDespatchById
+      parameters:
+        - name: despatch-id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 565899
+      responses:
+        '204':
+          description: Content deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessfulDeletion'
+        '400':
+          description: Despatch advice not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+              examples:
+                DespatchAdviceNotFound:
+                  value:
+                    message: "Despatch advice not found"
+                InvalidElementType:
+                  value:
+                    message: "Invalid element type provided"
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+
+components:
+  schemas:
+    HealthSuccess:
+      type: string
+      example: Service is operational
+    ServerError:
+      type: string
+      example: Error processing request
+    SuccessfulDeletion:
+      type: string
+      example: Despatch Advice 1 was deleted successfully.  
+    GenericError:
+      type: object
+      properties:
+        message:
+          type: string
+          description: A human-readable message describing the error
+      required:
+        - message
+    GenerationInput:
+      type: object
+      properties:
+        deliveredQuantity:
+          type: integer
+          example: 90
+        backorderQuantity:
+          type: integer
+          example: 10
+        backorderReason:
+          type: string
+          example: Out of stock
+        note:
+          type: string
+          example: Beeswax will be restocked on Friday
+        xml:
+          $ref: '#/components/schemas/OrderDoc'
+    UpdateFields:
+      properties:
+        deliveredQuantity:
+          type: integer
+          example: 90
+        backorderQuantity:
+          type: integer
+          example: 10
+        backorderReason:
+          type: string
+          example: Out of stock
+        note:
+          type: string
+          example: Beeswax will be restocked on Friday
+    OrderDoc:
+      type: object
+      xml:
+        name: Order
+      properties:
+        xmlns:
+          type: string
+          example: urn:oasis:names:specification:ubl:schema:xsd:Order-2
+          xml:
+            attribute: true # Renders 'id' as an XML attribute
+        ID:
+          type: integer
+          example: 565899
+        IssueDate:
+          type: string
+          format: date
+          example: 2025-03-03
+        IssueTime:
+          type: string
+          format: date-time
+          example: 12:00:00
+        Note:
+          type: string
+          example: Sample order
+        orderReference:
+          $ref: '#/components/schemas/OrderReference'
+        despatchSupplierParty:
+          $ref: '#/components/schemas/PartyContainer'
+        deliveryCustomerParty:
+          $ref: '#/components/schemas/PartyContainer'
+        shipment:
+          $ref: '#/components/schemas/Shipment'
+    DespatchDoc:
+      type: object
+      xml:
+        name: DespatchAdvice
+      properties:
+        xmlns:
+          type: string
+          example: urn:oasis:names:specification:ubl:schema:xsd:DespatchAdvice-2
+          xml:
+            attribute: true # Renders 'id' as an XML attribute
+        ID:
+          type: integer
+          example: 565899
+        IssueDate:
+          type: string
+          format: date
+          example: 2025-03-03
+        IssueTime:
+          type: string
+          format: date-time
+          example: 12:00:00
+        Note:
+          type: string
+          example: Sample despatch advice
+        orderReference:
+          $ref: '#/components/schemas/OrderReference'
+        despatchSupplierParty:
+          $ref: '#/components/schemas/PartyContainer'
+        deliveryCustomerParty:
+          $ref: '#/components/schemas/PartyContainer'
+        shipment:
+          $ref: '#/components/schemas/Shipment'
+    OrderReference:
+      type: object
+      properties:
+        id:
+          type: string
+          example: AEG012345
+    PartyContainer:
+      type: object
+      properties:
+        party:
+          $ref: '#/components/schemas/Party'
+    Party:
+      type: object
+      properties:
+        endpointId:
+          type: object
+          properties:
+            value:
+              type: string
+              example: "9429033821733"
+            schemeId:
+              type: string
+              example: "0088"
+        partyName:
+          type: object
+          properties:
+            name:
+              type: string
+              example: Consortial
+    Shipment:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "1"
+        delivery:
+          $ref: '#/components/schemas/Delivery'
+    Delivery:
+      type: object
+      properties:
+        deliveryAddress:
+          $ref: '#/components/schemas/Address'
+    Address:
+      type: object
+      properties:
+        streetName:
+          type: string
+          example: Avon Way
+        cityName:
+          type: string
+          example: Bridgtow
+        postalZone:
+          type: string
+          example: ZZ99 1ZZ
+        countrySubentity:
+          type: string
+          example: Avon
+        country:
+          type: object
+          properties:
+            identificationCode:
+              type: string
+              example: GB
