@@ -153,7 +153,7 @@ def test_successfully_deletes_multiple_despatch_advices():
 
 def test_fails_to_delete_when_despatch_advice_does_not_exist():
     # Delete despatch advice
-    delete_response = delete_despatch_advice(100)
+    delete_response = delete_despatch_advice(-100)
     assert delete_response.get("statusCode", '') == 404
     assert delete_response.get("body", '') == f"Despatch advice {despatch_id} not found"
 
