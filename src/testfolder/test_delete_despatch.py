@@ -115,11 +115,13 @@ def test_successfully_deletes_one_of_multiple_despatch_advices():
     # Successfully retrieve the other two despatch advices
     retrieve_response = get_despatch_advice_by_id(despatch_ids[0])
     assert retrieve_response.get("statusCode", '') == 200
-    assert parse_despatch_advice_and_return_success_boolean(retrieve_response.get("body", '')) == True
+    xml_string = retrieve_response.get("body", '')
+    assert parse_despatch_advice_and_return_success_boolean(xml_string) == True
 
     retrieve_response = get_despatch_advice_by_id(despatch_ids[2])
     assert retrieve_response.get("statusCode", '') == 200
-    assert parse_despatch_advice_and_return_success_boolean(retrieve_response.get("body", '')) == True
+    xml_string = retrieve_response.get("body", '')
+    assert parse_despatch_advice_and_return_success_boolean(xml_string) == True
 
 def test_successfully_deletes_multiple_despatch_advices():
     # Generate three despatch advices
@@ -146,7 +148,8 @@ def test_successfully_deletes_multiple_despatch_advices():
     # Successfully retrieve the remaining despatch advice
     retrieve_response = get_despatch_advice_by_id(despatch_ids[2])
     assert retrieve_response.get("statusCode", '') == 200
-    assert parse_despatch_advice_and_return_success_boolean(retrieve_response.get("body", '')) == True
+    xml_string = retrieve_response.get("body", '')
+    assert parse_despatch_advice_and_return_success_boolean(xml_string) == True
 
 def test_fails_to_delete_when_despatch_advice_does_not_exist():
     # Delete despatch advice
