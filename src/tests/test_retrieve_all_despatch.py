@@ -49,10 +49,20 @@ class TestRetrieveAllDespatchAdvice:
             assert response["body"] == combined_ubl
 """
     def test_retrieve_all_client_error(self):
-        error = ClientError({"Error": {"Code": "InternalError"}}, "Scan")
+        # Simulate a Client Error when accessing the table (Message required for e.response['Error']['Message'])
+        error = ClientError(
+            {
+                "Error": {
+                    "Code": "InternalServerError",
+                    "Message": "DynamoDB scan failure"
+                }
+            },
+            "Scan"
+        )
         with patch("src.db.dynamodb_table") as mock_table:
             mock_table.scan.side_effect = error
 
             response = retrieve_all_despatch_advice()
             mock_table.scan.assert_called_once()
             assert response["statusCode"] == 503
+            assert response["headers"]["Content-Type"] == "application/json"
