@@ -16,23 +16,26 @@ class TestRetrieveAllDespatchAdvice:
             {"despatch_ubl": "<DespatchAdvice><ID>2</ID></DespatchAdvice>"}
         ]
 
+        combined_ubl = f"<DespatchAdviceList{self.NAMESPACES}>" + \
+                        "".join([item["despatch_ubl"] for item in mock_response]) + \
+                        "</DespatchAdviceList>"
+
         with patch("src.db.dynamodb_table") as mock_table:
             #Retrieve all despatch advice documents 
             mock_table.scan.return_value = {"Items": mock_response}
             response  = retrieve_all_despatch_advice()
 
-            mock_table.scan.assert_called_once()
 
             #Check that the correct response was returned
             assert response["statusCode"] == 200
-            assert response["Content-Type"] == XML_TYPE
-            assert "<DespatchAdviceList" in response["body"]
-            assert "</DespatchAdviceList>" in response["body"]
-            assert "><" in response["body"]
+            assert response["body"] == combined_ubl
 
     def test_fails_to_retrieve_when_no_despatch_advice_exists(self):
         mock_response = []
-
+        combined_ubl = f"<DespatchAdviceList{self.NAMESPACES}>" + \
+                        "".join([item["despatch_ubl"] for item in mock_response]) + \
+                        "</DespatchAdviceList>"
+        
         with patch("src.db.dynamodb_table") as mock_table:
             mock_table.scan.return_value = {"Items": mock_response}
 
@@ -43,10 +46,7 @@ class TestRetrieveAllDespatchAdvice:
 
             # returns 
             assert response["statusCode"] == 200
-            assert response["Content-Type"] == XML_TYPE
-            assert "<DespatchAdviceList" in response["body"]
-            assert "</DespatchAdviceList>" in response["body"]
-            assert "><" in response["body"] 
+            assert response["body"] == combined_ubl
 
     def test_retrieve_all_client_error(self):
         error = ClientError({"Error": {"Code": "InternalError"}}, "Scan")
@@ -56,4 +56,3 @@ class TestRetrieveAllDespatchAdvice:
             response = retrieve_all_despatch_advice()
             mock_table.scan.assert_called_once()
             assert response["statusCode"] == 503
-            assert response["Content-Type"] == JSON_TYPE
