@@ -12,7 +12,7 @@ class TestDeleteDespatchAdvice:
         # Simulate a response for the mock table
         mock_response = {
             "Attributes": {
-                "despatchId": "123"
+                "despatch_id": "123"
             }
         }
 
@@ -23,7 +23,7 @@ class TestDeleteDespatchAdvice:
 
             # Ensure that the delete function was called once and works
             mock_table.delete_item.assert_called_once_with(
-                Key={"despatchId": "123"},
+                Key={"despatch_id": "123"},
                 ReturnValues="ALL_OLD"
             )
 
@@ -60,7 +60,7 @@ class TestDeleteDespatchAdvice:
             # Ensure that the delete function was called once and works
             response = delete_despatch_advice("123")
             mock_table.delete_item.assert_called_once_with(
-                Key={"despatchId": "123"},
+                Key={"despatch_id": "123"},
                 ReturnValues="ALL_OLD"
             )
 
