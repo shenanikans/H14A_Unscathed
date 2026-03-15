@@ -27,7 +27,7 @@ def retrieve_all_despatch_advice():
         items = response.get('Items', [])
 
         # Extract the stored documents
-        despatch_documents = [item['document'] for item in items]
+        despatch_documents = [item['despatch_ubl'] for item in items]
 
         # Wrap them in a single UBL container
         all_despatches = (
