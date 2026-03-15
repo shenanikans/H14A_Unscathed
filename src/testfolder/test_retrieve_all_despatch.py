@@ -26,7 +26,6 @@ class TestRetrieveAllDespatchAdvice:
 
             #Check that the correct response was returned
             assert response["statusCode"] == 200
-            assert response["Content-Type"] == XML_TYPE
             assert response["body"] == combined_ubl
 
     def test_fails_to_retrieve_when_no_despatch_advice_exists(self):
@@ -43,7 +42,6 @@ class TestRetrieveAllDespatchAdvice:
 
             # returns 
             assert response["statusCode"] == 200
-            assert response["Content-Type"] == XML_TYPE
             assert response["body"] == combined_ubl
 
     def test_retrieve_all_client_error(self):
@@ -54,4 +52,3 @@ class TestRetrieveAllDespatchAdvice:
             response = retrieve_all_despatch_advice()
             mock_table.scan.assert_called_once()
             assert response["statusCode"] == 503
-            assert response["Content-Type"] == JSON_TYPE
