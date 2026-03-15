@@ -204,11 +204,12 @@ def generate_despatch(event, context):
         da = ET.Element(f'{{{NS_UBL}}}DespatchAdvice')
 
 
-        despatch_id = int(str(uuid.uuid4().int)[:9])  # Unique integer for DynamoDB PK
+        # Use a string despatch_id to match DynamoDB partition key type
+        despatch_id = str(uuid.uuid4().int)[:9]
         cbc_add(da, 'UBLVersionID',          '2.0')
         cbc_add(da, 'CustomizationID',       'urn:oasis:names:specification:ubl:xpath:DespatchAdvice-2.0:sbs-1.0-draft')
         cbc_add(da, 'ProfileID',             'bpid:urn:oasis:names:draft:bpss:ubl-2-sbs-despatch-advice-notification-draft')
-        cbc_add(da, 'ID',                    str(despatch_id))
+        cbc_add(da, 'ID',                    despatch_id)
         cbc_add(da, 'CopyIndicator',         'false')
         cbc_add(da, 'UUID',                  str(uuid.uuid4()).upper())
         cbc_add(da, 'IssueDate',             issue_date_today)
@@ -284,10 +285,12 @@ def generate_despatch(event, context):
         # Store in DynamoDB and return
         despatch_xml = ET.tostring(da, encoding='unicode')
         try:
-            dynamodb_table.put_item(Item={
-                'despatchId': despatch_id,
-                'despatch_ubl': despatch_xml
-            })
+            dynamodb_table.put_item(
+                Item={
+                    'despatch_id': despatch_id,
+                    'despatch_ubl': despatch_xml,
+                }
+            )
         except ClientError as e:
             print('Error:', e)
             return build_response(400, JSON_TYPE, e.response['Error']['Message'])

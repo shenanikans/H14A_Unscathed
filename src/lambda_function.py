@@ -48,20 +48,20 @@ def lambda_handler(event, context):
         elif http_method == 'GET' and path.startswith(DESPATCH_ADVICE_PATH) and path_parameters:
             despatch_id = event['pathParameters'].get('despatch-id')
 
-            # Validate despatch_id is provided and is a positive integer
-            if not despatch_id or not despatch_id.isdigit():
+            # Validate despatch_id is provided and non-empty
+            if not despatch_id:
                 response = build_response(404, JSON_TYPE, "Not Found")
             else:
-                despatch_id = int(despatch_id)
+                # Pass through as string to match DynamoDB partition key type
                 response = retrieve_despatch(despatch_id)
         elif http_method == 'DELETE' and path.startswith(DESPATCH_ADVICE_PATH) and path_parameters:
             despatch_id = event['pathParameters'].get('despatch-id')
 
-            # Validate despatch_id is provided and is a positive integer
-            if not despatch_id or not despatch_id.isdigit():
+            # Validate despatch_id is provided and non-empty
+            if not despatch_id:
                 response = build_response(404, JSON_TYPE, "Not Found")
             else:
-                despatch_id = int(despatch_id)
+                # Pass through as string to match DynamoDB partition key type
                 response = delete_despatch(despatch_id)
         else:
             response = build_response(404, JSON_TYPE, 'Not Found')
