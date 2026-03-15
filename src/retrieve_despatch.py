@@ -1,8 +1,6 @@
 # Import required modules for the API
-import json
 import boto3
 from botocore.exceptions import ClientError
-from boto3.dynamodb.conditions import Key
 
 # Import helper function and constants to build the JSON response
 from src.helper_functions import build_response

@@ -1,6 +1,4 @@
 # Import required modules for the API
-import json
-import boto3
 from src.db import dynamodb_table
 from botocore.exceptions import ClientError
 
@@ -35,7 +33,7 @@ def lambda_handler(event, context):
         # Get information relevant to the http request
         http_method = event.get('httpMethod')
         path = event.get('path')
-        pathParameters = event.get('pathParameters')
+        path_parameters = event.get('pathParameters')
         
         # Determine the API endpoint requested and call the appropriate function 
         if http_method == 'GET' and path == HEALTH_CHECK_PATH:

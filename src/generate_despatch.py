@@ -147,8 +147,6 @@ def generate_despatch(event, context):
  
         order_id = root.findtext(f'{{{NS_CBC}}}ID') or 'UNKNOWN'
         issue_date = root.findtext(f'{{{NS_CBC}}}IssueDate') or ''
-        buyer_customer_party = root.find(f'{{{NS_CBC}}}BuyerCustomerParty') or ''
-        seller_supplier_party = root.find(f'{{{NS_CBC}}}SellerSupplierParty') or ''
         sales_order_id = root.findtext(f'.//{{{NS_CAC}}}OrderReference/{{{NS_CBC}}}SalesOrderID') or ''
         order_uuid     = root.findtext(f'.//{{{NS_CAC}}}OrderReference/{{{NS_CBC}}}UUID') or ''
 
