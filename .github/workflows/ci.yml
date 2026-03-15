@@ -1,19 +1,20 @@
 name: Python CI
+
 on:
   push:
     branches:
-      - '**'
+      - main
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
@@ -23,7 +24,7 @@ jobs:
           python -m pip install boto3 pytest pytest-cov xmlschema
 
       - name: Run tests with coverage
-        run: pytest src/tests -v --cov=src --cov-report=term --cov-report=html
+        run: PYTHONPATH=. pytest src/tests -v --cov=src --cov-report=term --cov-report=html
 
       - name: Upload coverage HTML report
         uses: actions/upload-artifact@v4
