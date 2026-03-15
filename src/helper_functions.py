@@ -1,8 +1,5 @@
 import json
-
 from src.constants import JSON_TYPE, XML_TYPE
-
-
 def build_response(status_code, content_type, body):
     """Builds a response object to be returned by the lambda handler using the provided status code, content-type, and body.
 

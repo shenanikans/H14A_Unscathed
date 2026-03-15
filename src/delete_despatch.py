@@ -1,6 +1,6 @@
 # Import required modules for the API
 import boto3
-from src.db import dynamodb_table
+import src.db
 from botocore.exceptions import ClientError
 
 # Import helper function and constants to build the JSON response
@@ -12,7 +12,7 @@ def delete_despatch(despatch_id):
     """ Deletes the despatch advice with the corresponding despatch ID if the ID provided is valid.
 
     Args:
-        despatch_id: int that indicates the corresponding ID of the despatch advice document to be deleted
+        despatch_id: str that indicates the corresponding ID of the despatch advice document to be deleted
     
     Returns: 
         Response: JSON object structure detailing the statusCode, Content-Type, and body
@@ -20,8 +20,8 @@ def delete_despatch(despatch_id):
 
     try:
         # Try delete the despatch advice using despatch_id
-        response = dynamodb_table.delete_item(
-            Key={'despatchId': despatch_id},
+        response = src.db.dynamodb_table.delete_item(
+            Key={'despatch_id': despatch_id},
             ReturnValues='ALL_OLD'
         )
 
@@ -34,4 +34,4 @@ def delete_despatch(despatch_id):
 
     except ClientError as e:
         print('Error:', e)
-        return build_response(400, JSON_TYPE, e.response['Error']['Message'])
+        return build_response(503, JSON_TYPE, e.response['Error']['Message'])

@@ -1,5 +1,7 @@
 # Import required modules for the API
-from src.db import dynamodb_table
+import json
+import boto3
+import src.db
 from botocore.exceptions import ClientError
 
 # Import functions and constants that perform the core data processing
@@ -8,6 +10,7 @@ from src.constants import JSON_TYPE
 from src.delete_despatch import delete_despatch
 from src.retrieve_despatch import retrieve_despatch
 from src.generate_despatch import generate_despatch
+from src.retrieve_all_despatch import retrieve_all_despatch_advice
 
 # Initialise URL constants
 BASE_URL = '/api/despatch'
@@ -40,7 +43,9 @@ def lambda_handler(event, context):
             return health_check(event, context)
         elif http_method == 'POST' and path == DESPATCH_ADVICE_PATH:
             return generate_despatch(event, context)
-        elif http_method == 'GET' and path.startswith(DESPATCH_ADVICE_PATH) and pathParameters:
+        elif http_method == 'GET' and path == DESPATCH_ADVICE_PATH:
+            response = retrieve_all_despatch_advice()
+        elif http_method == 'GET' and path.startswith(DESPATCH_ADVICE_PATH) and path_parameters:
             despatch_id = event['pathParameters'].get('despatch-id')
 
             # Validate despatch_id is provided and is a positive integer
@@ -49,7 +54,7 @@ def lambda_handler(event, context):
             else:
                 despatch_id = int(despatch_id)
                 response = retrieve_despatch(despatch_id)
-        elif http_method == 'DELETE' and path.startswith(DESPATCH_ADVICE_PATH) and pathParameters:
+        elif http_method == 'DELETE' and path.startswith(DESPATCH_ADVICE_PATH) and path_parameters:
             despatch_id = event['pathParameters'].get('despatch-id')
 
             # Validate despatch_id is provided and is a positive integer
@@ -64,7 +69,7 @@ def lambda_handler(event, context):
     # Handle any errors raised accordingly
     except Exception as e:
         print('Error:', e)
-        response = build_response(400, JSON_TYPE, 'Error processing request')
+        response = build_response(500, JSON_TYPE, 'Server error: Error processing request')
    
     return response
 
@@ -82,12 +87,12 @@ def health_check(event, context):
                   and body message.
     """
     try:
-      status = dynamodb_table.table_status
-      if status == 'ACTIVE':
-        response = build_response(200, JSON_TYPE, 'Service is operational')
-      else:
-        response = build_response(503, JSON_TYPE, 'Table not ready')
+        status = src.db.dynamodb_table.table_status
+        if status == 'ACTIVE':
+            response = build_response(200, JSON_TYPE, 'Service is operational')
+        else:
+            response = build_response(503, JSON_TYPE, 'Table not ready')
     except ClientError as e:
-      print('Error:', e)
-      response = build_response(503, JSON_TYPE, 'Error processing request')
+        print('Error:', e)
+        response = build_response(503, JSON_TYPE, e.response['Error']['Message'])
     return response
