@@ -9,7 +9,8 @@ def build_response(status_code, content_type, body):
         body: str that indicates the message to be returned (raw XML string for XML_TYPE, or any value to be JSON-encoded for JSON_TYPE)
     
     Returns: 
-        Response: dict with statusCode, headers (Content-Type), and body. For XML_TYPE the body is the raw string; for JSON the body is json.dumps(body).
+        Response: dict with statusCode, headers (Content-Type), and body.
+        For XML_TYPE the body is the raw string; for JSON_TYPE the body is json.dumps(body).
     """
     if content_type == XML_TYPE:
         response_body = body if isinstance(body, str) else str(body)
