@@ -1,92 +1,70 @@
-# Import modules needed for testing
+# Import python modules needed for testing
 import pytest
-import sys
-import json
-from unittest.mock import patch, MagicMock, PropertyMock
+from unittest.mock import patch
 from botocore.exceptions import ClientError
 
-# Import functions required for testing
-from src.constants import updated_order
-from src.helper_functions import parse_despatch_advice_and_return_success_boolean, generate_despatch_advice_and_return_id
-from src.delete_despatch import delete_despatch_advice
+# Import function to test
 from src.retrieve_despatch_by_id import get_despatch_advice_by_id
-from src.generate_despatch import generate_despatch
-from src.update_despatch import update_despatch
 
-# Makes a mock database for testing
-mock_db = MagicMock()
-sys.modules['db'] = mock_db
+class TestRetrieveDespatchAdviceById:
+    # Test that an existing despatch advice is successfully retrieved
+    def test_successfully_retrieves_despatch_advice(self):
+        # Simulate a response for the mock table
+        mock_response = {
+            "Item": {
+                "despatch_ubl": "<xml>sample document</xml>"
+            }
+        }
 
-# Test that an existing despatch advice is successfully retrieved
-def test_successfully_retrieves_despatch_advice():
-    with patch('src.generate_despatch.dynamodb_table') as mock_table:
-        mock_table.table_status = 'ACTIVE'
+        with patch("src.db.dynamodb_table") as mock_table:
+            # Retrieve the despatch advice
+            mock_table.get_item.return_value = mock_response
+            response = get_despatch_advice_by_id("123")
 
-        # Generate a despatch advice
-        despatch_id = generate_despatch_advice_and_return_id()
+            # Ensure that the retrieve function was called once and works
+            mock_table.get_item.assert_called_once_with(Key={"despatch_id": "123"})
 
-    with patch('src.retrieve_despatch_advice_by_id.dynamodb_table') as mock_table:
-        mock_table.table_status = 'ACTIVE'
+            # Check that a 200 response was returned
+            assert response["statusCode"] == 200
+            assert response["headers"]["Content-Type"] == "application/xml"
+            assert response["body"] == "<xml>sample document</xml>"
 
-        # Retrieve the despatch advice and check response is correct
-        retrieve_response = get_despatch_advice_by_id(despatch_id)
-        assert retrieve_response.get("statusCode", '') == 200
-        xml_string = retrieve_response.get("body", '')
-        assert parse_despatch_advice_and_return_success_boolean(xml_string) == True
+    # Test that a non-existent despatch advice cannot be retrieved
+    def test_fails_to_retrieve_when_despatch_advice_does_not_exist(self):
+        # Simulate item not found
+        mock_response = {}
 
-# Test that an updated despatch advice is successfully retrieved
-def test_successfully_retrieves_updated_despatch_advice():
-    with patch('src.generate_despatch.dynamodb_table') as mock_table:
-        mock_table.table_status = 'ACTIVE'
-        # Generate a despatch advice
-        despatch_id = generate_despatch_advice_and_return_id()
+        with patch("src.db.dynamodb_table") as mock_table:
+            mock_table.get_item.return_value = mock_response
 
-    with patch('src.update_despatch.dynamodb_table') as mock_table:
-        mock_table.table_status = 'ACTIVE'
-        # Update despatch advice
-        update_despatch(despatch_id, updated_order)
+            # Try to retrieve a non-existent despatch advice
+            response = get_despatch_advice_by_id("999")
+            mock_table.get_item.assert_called_once_with(Key={"despatch_id": "999"})
 
-    with patch('src.retrieve_despatch_advice_by_id.dynamodb_table') as mock_table:
-        mock_table.table_status = 'ACTIVE'
-        # Retrieve the despatch advice and check response is correct
-        retrieve_response = get_despatch_advice_by_id(despatch_id)
-        assert retrieve_response.get("statusCode", '') == 200
-        xml_string = retrieve_response.get("body", '')
-        assert parse_despatch_advice_and_return_success_boolean(xml_string) == True
+            # Check that a 404 response was returned
+            assert response["statusCode"] == 404
+            assert response["headers"]["Content-Type"] == "application/json"
 
-# Test that a deleted despatch advice fails to retrieve
-def test_fails_to_retrieve_deleted_despatch_advice():
-    with patch('src.generate_despatch.dynamodb_table') as mock_table:
-        mock_table.table_status = 'ACTIVE'
-        # Generate a despatch advice
-        despatch_id = generate_despatch_advice_and_return_id()
+    # Test that the retrieving the table returns 503 when AWS throws a ClientError
+    def test_retrieve_client_error(self):
+        # Simulate a Client Error when accessing the table
+        error = ClientError(
+            {
+                "Error": {
+                    "Code": "InternalServerError",
+                    "Message": "DynamoDB failure"
+                }
+            },
+            "GetItem"
+        )
 
-    with patch('src.delete_despatch.dynamodb_table') as mock_table:
-        mock_table.table_status = 'ACTIVE'
-        # Delete the despatch advice
-        delete_despatch_advice(despatch_id)
+        with patch("src.db.dynamodb_table") as mock_table:
+            mock_table.get_item.side_effect = error
 
-    with patch('src.retrieve_despatch_advice_by_id.dynamodb_table') as mock_table:
-        mock_table.table_status = 'ACTIVE'
-        # Retrieve the despatch advice and check response is correct
-        retrieve_response = get_despatch_advice_by_id(despatch_id)
-        assert retrieve_response.get("statusCode", '') == 404
-        assert retrieve_response.get("body", '') == f"Despatch advice {despatch_id} not found"
+            # Ensure that the retrieve function was called once and works
+            response = get_despatch_advice_by_id("123")
+            mock_table.get_item.assert_called_once_with(Key={"despatch_id": "123"})
 
-# Test that a non-existent despatch advice cannot be retrieved
-def test_fails_to_retrieve_non_existent_despatch_advice():
-    with patch('src.retrieve_despatch_advice_by_id.dynamodb_table') as mock_table:
-        mock_table.table_status = 'ACTIVE'
-
-        retrieve_response = get_despatch_advice_by_id(-100)
-        assert retrieve_response.get("statusCode", '') == 404
-        assert retrieve_response.get("body", '') == f"Despatch advice {despatch_id} not found"
-
-# Test that the retrieving the table returns 503 when AWS throws a ClientError
-def test_fails_when_client_error_returned():
-    with patch('src.retrieve_despatch_advice_by_id.dynamodb_table') as mock_table:
-        type(mock_table).table_status = PropertyMock(side_effect = ClientError(
-            {'Error': {'Code': '503', 'Message': 'AWS Error'}},'RetrieveUser'))
-
-        retrieve_response = get_despatch_advice_by_id(1)
-        assert retrieve_response.get("statusCode", '') == 503
+            # Check that it fails to retrieve when AWS throws a client error
+            assert response["statusCode"] == 503
+            assert response["headers"]["Content-Type"] == "application/json"
