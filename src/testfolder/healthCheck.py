@@ -1,14 +1,12 @@
 import pytest
-import sys
-import json
-from unittest.mock import patch, MagicMock, PropertyMock
+from unittest.mock import patch, PropertyMock
 from botocore.exceptions import ClientError
 from src.lambda_function import healthCheck
 
 # Test that the health check returns 200 when the DynamoDB table is ACTIVE
 class TestHealthCheckSuccess:
     def test_health_check_active(self):
-        with patch('src.lambda_function.dynamodb_table') as mock_table:
+        with patch('src.db.dynamodb_table') as mock_table:
             mock_table.table_status = 'ACTIVE'
             response = healthCheck({}, {})
             assert response['statusCode'] == 200
@@ -18,7 +16,7 @@ class TestHealthCheckSuccess:
 class TestHealthCheckTableNotReady:
     @pytest.mark.parametrize("status", ["CREATING", "UPDATING", "DELETING"])
     def test_health_check_creating(self, status):
-        with patch('src.lambda_function.dynamodb_table') as mock_table:
+        with patch('src.db.dynamodb_table') as mock_table:
             mock_table.table_status = status
             response = healthCheck({}, {})
             assert response['statusCode'] == 503
@@ -28,7 +26,7 @@ class TestHealthCheckTableNotReady:
 # Test that the health check returns 503 when AWS throws a ClientError
 class TestHealthCheckErrors:
     def test_health_check_client_error(self):
-        with patch('src.lambda_function.dynamodb_table') as mock_table:
+        with patch('src.db.dynamodb_table') as mock_table:
             type(mock_table).table_status = PropertyMock(side_effect = ClientError(
                 {'Error': {'Code': '503', 'Message': 'AWS Error'}},'RetrieveDespatch'))
             response = healthCheck({}, {})
