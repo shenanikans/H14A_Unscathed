@@ -7,8 +7,8 @@ from botocore.exceptions import ClientError
 # Import functions and constants that perform the core data processing
 from src.helper_functions import build_response
 from src.constants import JSON_TYPE
-from src.delete_despatch import delete_despatch_advice
-from src.retrieve_despatch_by_id import get_despatch_advice_by_id
+from src.delete_despatch import delete_despatch
+from src.retrieve_despatch import retrieve_despatch
 
 # Initialise URL constants
 BASE_URL = '/api/despatch'
@@ -38,7 +38,7 @@ def lambda_handler(event, context):
         
         # Determine the API endpoint requested and call the appropriate function 
         if http_method == 'GET' and path == HEALTH_CHECK_PATH:
-            return healthCheck(event, context)
+            return health_check(event, context)
         elif http_method == 'GET' and path.startswith(DESPATCH_ADVICE_PATH) and pathParameters:
             despatch_id = event['pathParameters'].get('despatch-id')
 
@@ -47,7 +47,7 @@ def lambda_handler(event, context):
                 response = build_response(404, JSON_TYPE, "Not Found")
             else:
                 despatch_id = int(despatch_id)
-                response = get_despatch_advice_by_id(despatch_id)
+                response = retrieve_despatch(despatch_id)
         elif http_method == 'DELETE' and path.startswith(DESPATCH_ADVICE_PATH) and pathParameters:
             despatch_id = event['pathParameters'].get('despatch-id')
 
@@ -56,7 +56,7 @@ def lambda_handler(event, context):
                 response = build_response(404, JSON_TYPE, "Not Found")
             else:
                 despatch_id = int(despatch_id)
-                response = delete_despatch_advice(despatch_id)
+                response = delete_despatch(despatch_id)
         else:
             response = build_response(404, JSON_TYPE, 'Not Found')
         
@@ -69,7 +69,7 @@ def lambda_handler(event, context):
 
 
 
-def healthCheck(event, context):
+def health_check(event, context):
     """Handles health check requests from API Gateway by verifying that the service and DynamoDB table are operational.
     Args:
         Event: JSON-formatted data structure sent by API Gateway that contains request

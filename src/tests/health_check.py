@@ -3,9 +3,9 @@ import sys
 import json
 from unittest.mock import patch, MagicMock, PropertyMock
 from botocore.exceptions import ClientError
-from src.lambda_function import healthCheck
+from src.lambda_function import health_check
 
-# Makes a mock database anytime db from the healthCheck function in lambda_function.py is called
+# Makes a mock database anytime db from the health_check function in lambda_function.py is called
 mock_db = MagicMock()
 sys.modules['db'] = mock_db
 
@@ -13,7 +13,7 @@ sys.modules['db'] = mock_db
 def test_health_check_active():
     with patch('src.lambda_function.dynamodb_table') as mock_table:
         mock_table.table_status = 'ACTIVE'
-        response = healthCheck({}, {})
+        response = health_check({}, {})
         assert response['statusCode'] == 200
 
 
@@ -21,14 +21,14 @@ def test_health_check_active():
 def test_health_check_creating():
     with patch('src.lambda_function.dynamodb_table') as mock_table:
         mock_table.table_status = 'CREATING'
-        response = healthCheck({}, {})
+        response = health_check({}, {})
         assert response['statusCode'] == 503
 
 # Test that the health check returns 503 when the DynamoDB table is UPDATING (not ready)
 def test_health_check_updating():
     with patch('src.lambda_function.dynamodb_table') as mock_table:
         mock_table.table_status = 'UPDATING'
-        response = healthCheck({}, {})
+        response = health_check({}, {})
         assert response['statusCode'] == 503
 
 
@@ -36,7 +36,7 @@ def test_health_check_updating():
 def test_health_check_deleting():
     with patch('src.lambda_function.dynamodb_table') as mock_table:
         mock_table.table_status = 'DELETING'
-        response = healthCheck({}, {})
+        response = health_check({}, {})
         assert response['statusCode'] == 503
 
 # Test that the health check returns 503 when AWS throws a ClientError
@@ -45,6 +45,6 @@ def test_health_check_client_error():
         type(mock_table).table_status = PropertyMock(side_effect = ClientError(
             {'Error': {'Code': '500', 'Message': 'AWS Error'}},'RetrieveUser'))
         
-        response = healthCheck({}, {})
+        response = health_check({}, {})
         assert response['statusCode'] == 503
 

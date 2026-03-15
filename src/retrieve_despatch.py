@@ -9,7 +9,7 @@ from src.helper_functions import build_response
 from src.constants import JSON_TYPE, XML_TYPE
 from src.db import dynamodb_table
 
-def get_despatch_advice_by_id(despatch_id):
+def retrieve_despatch(despatch_id):
     """ Retrieves the despatch advice with the corresponding despatch ID if the ID provided is valid.
 
     Args:

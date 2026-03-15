@@ -10,7 +10,7 @@ from src.helper_functions import build_response
 from src.constants import JSON_TYPE
 
 
-def delete_despatch_advice(despatch_id):
+def delete_despatch(despatch_id):
     """ Deletes the despatch advice with the corresponding despatch ID if the ID provided is valid.
 
     Args:

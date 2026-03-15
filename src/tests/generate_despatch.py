@@ -1,7 +1,7 @@
 import pytest
 import xml.etree.ElementTree as ET
 from unittest.mock import patch, MagicMock
-from generate_despatch import generate_despatch
+from src.generate_despatch import generate_despatch
 
 # ── Namespaces ──────────────────────────────────────────────────────────────
 NS_CBC = 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2'
@@ -86,7 +86,7 @@ class TestValidDespatch:
     def test_returns_xml_content_type(self, mock_schema):
         mock_schema.return_value.validate.return_value = None
         response = generate_despatch(make_event(VALID_ORDER_XML), {})
-        assert response['headers']['Content-Type'] == 'application/xml'
+        assert response['headers']['Content-Type'] == XML_TYPE
 
     @patch('generate_despatch.xmlschema.XMLSchema')
     def test_body_is_valid_xml(self, mock_schema):

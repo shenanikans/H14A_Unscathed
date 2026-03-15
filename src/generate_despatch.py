@@ -3,6 +3,11 @@ import xml.etree.ElementTree as ET
 import xmlschema
 import uuid
 from datetime import datetime, timedelta
+from botocore.exceptions import ClientError
+
+from src.helper_functions import build_response
+from src.constants import JSON_TYPE, XML_TYPE
+from src.db import dynamodb_table
 
 ## NAMESPACES!!
 NS_CBC = 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2'
@@ -85,7 +90,7 @@ def generate_despatch(event, context):
         try:
             schema.validate(order_xml_string)
         except xmlschema.XMLSchemaValidationError as e:
-            return {'statusCode': 400, 'body': f'Invalid Order XML: {e}'}
+            return build_response(400, JSON_TYPE, f'Invalid Order XML: {e}')
 
 
         root = ET.fromstring(order_xml_string.encode())
@@ -151,10 +156,11 @@ def generate_despatch(event, context):
         da = ET.Element(f'{{{NS_UBL}}}DespatchAdvice')
 
 
+        despatch_id = int(str(uuid.uuid4().int)[:9])  # Unique integer for DynamoDB PK
         cbc_add(da, 'UBLVersionID',          '2.0')
         cbc_add(da, 'CustomizationID',       'urn:oasis:names:specification:ubl:xpath:DespatchAdvice-2.0:sbs-1.0-draft')
         cbc_add(da, 'ProfileID',             'bpid:urn:oasis:names:draft:bpss:ubl-2-sbs-despatch-advice-notification-draft')
-        cbc_add(da, 'ID',                    str(uuid.uuid4().int)[:6])
+        cbc_add(da, 'ID',                    str(despatch_id))
         cbc_add(da, 'CopyIndicator',         'false')
         cbc_add(da, 'UUID',                  str(uuid.uuid4()).upper())
         cbc_add(da, 'IssueDate',             issue_date_today)
@@ -228,18 +234,19 @@ def generate_despatch(event, context):
                 sid = cac_add(item, 'SellersItemIdentification')
                 cbc_add(sid, 'ID', line['sellersItemID'])
  
-        # RETURN
+        # Store in DynamoDB and return
         despatch_xml = ET.tostring(da, encoding='unicode')
-        return {
-            'statusCode': 200,
-            'headers': {'Content-Type': 'application/xml'},
-            'body': despatch_xml,
-        }
-    
+        try:
+            dynamodb_table.put_item(Item={
+                'despatchId': despatch_id,
+                'despatch_ubl': despatch_xml
+            })
+        except ClientError as e:
+            print('Error:', e)
+            return build_response(400, JSON_TYPE, e.response['Error']['Message'])
+
+        return build_response(200, XML_TYPE, despatch_xml)
 
     except Exception as e:
-        return {
-            "statusCode": 400,
-            "body": str(e)
-        }
+        return build_response(400, JSON_TYPE, str(e))
     
