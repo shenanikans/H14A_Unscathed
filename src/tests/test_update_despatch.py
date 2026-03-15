@@ -192,7 +192,7 @@ class TestUpdateDespatchAdviceNotFoundAndErrors:
             mock_table.get_item.return_value = {"Item": {"despatch_ubl": "<not valid xml"}}
             response = update_despatch_advice("123", "{}")
         assert response["statusCode"] == 500
-        assert "invalid XML" in json.loads(response["body"]).lower()
+        assert "invalid xml" in json.loads(response["body"]).lower()
         mock_table.update_item.assert_not_called()
 
     def test_returns_503_on_client_error_get_item(self):
