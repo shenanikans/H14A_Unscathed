@@ -26,10 +26,11 @@ class TestHealthCheckTableNotReady:
 
 
 # Test that the health check returns 503 when AWS throws a ClientError
-def test_health_check_client_error():
-    with patch('src.lambda_function.dynamodb_table') as mock_table:
-        type(mock_table).table_status = PropertyMock(side_effect = ClientError(
-            {'Error': {'Code': '503', 'Message': 'AWS Error'}},'RetrieveDespatch'))
-        response = healthCheck({}, {})
-        assert response['statusCode'] == 503
+class TestHealthCheckErrors:
+    def test_health_check_client_error(self):
+        with patch('src.lambda_function.dynamodb_table') as mock_table:
+            type(mock_table).table_status = PropertyMock(side_effect = ClientError(
+                {'Error': {'Code': '503', 'Message': 'AWS Error'}},'RetrieveDespatch'))
+            response = healthCheck({}, {})
+            assert response['statusCode'] == 503
 
