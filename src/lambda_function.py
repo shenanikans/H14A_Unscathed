@@ -94,7 +94,7 @@ def health_check(event, context):
     """
 
     try:
-        status = dynamodb_table.table_status
+        status = src.db.dynamodb_table.table_status
         if status == 'ACTIVE':
             response = build_response(200, JSON_TYPE, 'Service is operational')
         else:

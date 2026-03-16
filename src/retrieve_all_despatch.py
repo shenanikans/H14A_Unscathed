@@ -14,17 +14,13 @@ NS_CAC = 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents
 def retrieve_all_despatch_advice():
     """ Retrieves all saved despatch advice documents.
 
-<<<<<<< HEAD
     Returns:
-=======
-    Returns: 
->>>>>>> 19ed096f8ee6b2586077fc3c3a328e311603a313
         Response: dict with statusCode, headers, and body (XML)
     """
 
     try:
         # Scan all stored despatch advice documents
-        response = dynamodb_table.scan() 
+        response = src.db.dynamodb_table.scan() 
 
         # Get the items from the response
         items = response.get('Items', [])
