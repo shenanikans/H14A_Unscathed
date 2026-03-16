@@ -11,6 +11,7 @@ from src.retrieve_despatch import retrieve_despatch
 from src.generate_despatch import generate_despatch
 from src.retrieve_all_despatch import retrieve_all_despatch_advice
 from src.update_despatch import update_despatch_advice
+from src.update_despatch import update_despatch_advice
 
 # Initialise URL constants
 BASE_URL = '/api/despatch'
@@ -26,6 +27,7 @@ def lambda_handler(event, context):
         Context: Object that provides runtime information about the function
 
     Returns:
+        Response: Response dict with statusCode, headers, and body
         Response: Response dict with statusCode, headers, and body
     """
 
@@ -43,7 +45,8 @@ def lambda_handler(event, context):
             return health_check()
         
         elif http_method == 'POST' and path == DESPATCH_ADVICE_PATH:
-            return generate_despatch(event['body'])
+            body = event.get('body') or ''
+            return generate_despatch(body)
         elif http_method == 'GET' and path == DESPATCH_ADVICE_PATH:
             response = retrieve_all_despatch_advice()
         elif http_method == 'GET' and path.startswith(DESPATCH_ADVICE_PATH) and path_parameters:
@@ -55,6 +58,14 @@ def lambda_handler(event, context):
             else:
                 # Pass through as string to match DynamoDB partition key type
                 response = retrieve_despatch(despatch_id)
+        elif http_method == 'PUT' and path.startswith(DESPATCH_ADVICE_PATH) and path_parameters:
+            despatch_id = event['pathParameters'].get('despatch-id')
+            body = event.get('body') or '{}'
+
+            if not despatch_id:
+                response = build_response(404, JSON_TYPE, "Not Found")
+            else:
+                response = update_despatch_advice(despatch_id, body)
         elif http_method == 'PUT' and path.startswith(DESPATCH_ADVICE_PATH) and path_parameters:
             despatch_id = event['pathParameters'].get('despatch-id')
             body = event.get('body') or '{}'
