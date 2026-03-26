@@ -4,21 +4,18 @@ import xmlschema
 import uuid
 from datetime import datetime, timedelta
 from botocore.exceptions import ClientError
-import boto3
+
 
 from src.helper_functions import build_response
 from src.constants import JSON_TYPE, XML_TYPE
 import src.db
+import src.s3 as s3
 
-## s3 client definition
-s3_client = boto3.client("s3", region_name='us-east-1');
 
 ## NAMESPACES!!
 NS_CBC = 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2'
 NS_CAC = 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2'
 NS_UBL = 'urn:oasis:names:specification:ubl:schema:xsd:DespatchAdvice-2'
-BUCKET_NAME = 'xml-storage-bucket'
-
 
 
 def cbc_add(parent, tag, text, attribs=None):
@@ -285,7 +282,7 @@ def generate_despatch(order_xml_string):
         # Store in DynamoDB and return
         despatch_xml = ET.tostring(da, encoding='unicode')
         try:
-            s3_client.put_object(BUCKET_NAME, f"dispatches/{despatch_id}.xml", despatch_xml_bytes, 'application/xml')
+            s3.s3_client.put_object(s3.BUCKET_NAME, f"dispatches/{despatch_id}.xml", despatch_xml_bytes, 'application/xml')
 
             src.db.dynamodb_table.put_item(
                 {
