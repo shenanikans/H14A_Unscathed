@@ -70,44 +70,52 @@ def make_event(xml_string):
 
 
 def parse_response_xml(response):
-    """Helper to parse the returned despatch XML string (body may be JSON-encoded via build_response)."""
     body = response['body']
-    if isinstance(body, str) and body.strip().startswith('"'):
+    if isinstance(body, str) and body.startswith('"'):
         body = json.loads(body)
-    return ET.fromstring(body.encode() if isinstance(body, str) else body)
+    return ET.fromstring(body)
 
 
 # ── Tests: valid despatch advice ─────────────────────────────────────────────
 
 class TestValidDespatch:
-
+    @patch("src.s3.s3_client")
     @patch('src.db.dynamodb_table')
     @patch('src.generate_despatch.xmlschema.XMLSchema')
-    def test_returns_200(self, mock_schema, mock_db):
+    def test_returns_200(self, mock_schema, mock_db,mock_s3):
         mock_schema.return_value.validate.return_value = None  # skip real schema
+        mock_s3.put_object.return_value = {}
         response = generate_despatch(VALID_ORDER_XML)
         assert response['statusCode'] == 200
 
+    @patch("src.s3.s3_client")
     @patch('src.db.dynamodb_table')
     @patch('src.generate_despatch.xmlschema.XMLSchema')
-    def test_returns_xml_content_type(self, mock_schema, mock_db):
+    def test_returns_xml_content_type(self, mock_schema, mock_db, mock_s3):
         mock_schema.return_value.validate.return_value = None
+        mock_s3.put_object.return_value = {}
         response = generate_despatch(VALID_ORDER_XML)
         assert response['headers']['Content-Type'] == XML_TYPE
 
+    @patch("src.s3.s3_client")
     @patch('src.db.dynamodb_table')
     @patch('src.generate_despatch.xmlschema.XMLSchema')
-    def test_body_is_valid_xml(self, mock_schema, mock_db):
+    def test_body_is_valid_xml(self, mock_schema, mock_db,mock_s3):
         mock_schema.return_value.validate.return_value = None
+        mock_s3.put_object.return_value = {}
+
         response = generate_despatch(VALID_ORDER_XML)
         # should not raise
         root = parse_response_xml(response)
         assert root is not None
 
+    @patch("src.s3.s3_client")
     @patch('src.db.dynamodb_table')
     @patch('src.generate_despatch.xmlschema.XMLSchema')
-    def test_order_reference_id_matches(self, mock_schema, mock_db):
+    def test_order_reference_id_matches(self, mock_schema, mock_db, mock_s3):
         mock_schema.return_value.validate.return_value = None
+        mock_s3.put_object.return_value = {}
+
         response = generate_despatch(VALID_ORDER_XML)
         root = parse_response_xml(response)
         order_ref_id = root.findtext(
@@ -115,19 +123,23 @@ class TestValidDespatch:
         )
         assert order_ref_id == 'ORD-001'
 
+    @patch("src.s3.s3_client")
     @patch('src.db.dynamodb_table')
     @patch('src.generate_despatch.xmlschema.XMLSchema')
-    def test_despatch_line_quantity(self, mock_schema, mock_db):
+    def test_despatch_line_quantity(self, mock_schema, mock_db, mock_s3):
         mock_schema.return_value.validate.return_value = None
+        mock_s3.put_object.return_value = {}
         response = generate_despatch(VALID_ORDER_XML)
         root = parse_response_xml(response)
         qty = root.findtext(f'.//{{{NS_CBC}}}DeliveredQuantity')
         assert qty == '5'
 
+    @patch("src.s3.s3_client")
     @patch('src.db.dynamodb_table')
     @patch('src.generate_despatch.xmlschema.XMLSchema')
-    def test_delivery_address_populated(self, mock_schema, mock_db):
+    def test_delivery_address_populated(self, mock_schema, mock_db, mock_s3):
         mock_schema.return_value.validate.return_value = None
+        mock_s3.put_object.return_value = {}
         response = generate_despatch(VALID_ORDER_XML)
         root = parse_response_xml(response)
         city = root.findtext(
@@ -135,10 +147,12 @@ class TestValidDespatch:
         )
         assert city == 'Melbourne'
 
+    @patch("src.s3.s3_client")
     @patch('src.db.dynamodb_table')
     @patch('src.generate_despatch.xmlschema.XMLSchema')
-    def test_delivery_dates_auto_generated(self, mock_schema, mock_db):
+    def test_delivery_dates_auto_generated(self, mock_schema, mock_db, mock_s3):
         mock_schema.return_value.validate.return_value = None
+        mock_s3.put_object.return_value = {}
         response = generate_despatch(VALID_ORDER_XML)
         root = parse_response_xml(response)
         start = root.findtext(f'.//{{{NS_CBC}}}StartDate')
@@ -147,9 +161,10 @@ class TestValidDespatch:
         assert end is not None
         assert end > start  # end date is after start date
 
+    @patch("src.s3.s3_client")
     @patch('src.db.dynamodb_table')
     @patch('src.generate_despatch.xmlschema.XMLSchema')
-    def test_multiple_order_lines(self, mock_schema, mock_db):
+    def test_multiple_order_lines(self, mock_schema, mock_db, mock_s3):
         mock_schema.return_value.validate.return_value = None
         multi_line_xml = VALID_ORDER_XML.replace(
             '</Order>',
@@ -158,6 +173,8 @@ class TestValidDespatch:
                 <cac:Item><cbc:Name>Widget B</cbc:Name></cac:Item>
                </cac:OrderLine></Order>"""
         )
+        mock_s3.put_object.return_value = {}
+
         response = generate_despatch(multi_line_xml)
         root = parse_response_xml(response)
         lines = root.findall(
