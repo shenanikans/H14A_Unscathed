@@ -8,6 +8,7 @@ from json import JSONDecodeError
 from src.helper_functions import build_response
 from src.constants import JSON_TYPE, XML_TYPE
 import src.db
+import src.s3 as s3
 
 NS_CBC = 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2'
 NS_CAC = 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2'
@@ -56,7 +57,17 @@ def update_despatch_advice(despatch_id, body):
         if 'Item' not in response:
             return build_response(404, JSON_TYPE, f'Despatch advice {despatch_id} not found')
 
-        xml_string = response['Item']['despatch_ubl'] 
+        key = f"dispatches/{despatch_id}.xml"
+
+        try:
+            s3_response = s3.s3_client.get_object(
+                Bucket=s3.BUCKET_NAME,
+                Key=key
+            )
+            xml_string = s3_response['Body'].read().decode('utf-8')
+        except ClientError as e:
+            print('Error:', e)
+            return build_response(500, JSON_TYPE, 'Stored despatch document is invalid XML.')
 
         try:
             root = ET.fromstring(xml_string)
@@ -89,12 +100,11 @@ def update_despatch_advice(despatch_id, body):
 
         updated_xml = ET.tostring(root, encoding="unicode")
 
-        src.db.dynamodb_table.update_item(
-            Key={'despatch_id': despatch_id},
-            UpdateExpression="SET despatch_ubl = :xml",
-            ExpressionAttributeValues={
-                ':xml': updated_xml
-            }
+        s3.s3_client.put_object(
+            Bucket=s3.BUCKET_NAME,
+            Key=key,
+            Body=updated_xml.encode('utf-8'),
+            ContentType='application/xml'
         )
 
         return build_response(200, XML_TYPE, updated_xml)
