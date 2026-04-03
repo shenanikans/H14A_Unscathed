@@ -8,18 +8,24 @@ from src.delete_despatch import delete_despatch
 
 class TestDeleteDespatchAdvice:
     # Test that an existing despatch advice is successfully deleted
+    
     def test_successfully_deletes_despatch_advice(self):
         # Simulate a response for the mock table
         mock_response = {
             "Attributes": {
-                "despatch_id": "123"
+                "despatch_id": "123",
+                "s3-key": "despatch/123.xml"
             }
         }
 
-        with patch("src.db.dynamodb_table") as mock_table:
+        with patch("src.db.dynamodb_table") as mock_table, patch("src.s3.s3_client") as mock_s3:
             # Delete the despatch advice
+            
             mock_table.delete_item.return_value = mock_response
+            mock_s3.delete_object.return_value = {}
+            
             response = delete_despatch("123")
+
 
             # Ensure that the delete function was called once and works
             mock_table.delete_item.assert_called_once_with(

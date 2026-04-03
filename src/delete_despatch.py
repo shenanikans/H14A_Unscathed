@@ -1,6 +1,7 @@
 # Import required modules for the API
 import src.db
 from botocore.exceptions import ClientError
+import src.s3 as s3
 
 # Import helper function and constants to build the JSON response
 from src.helper_functions import build_response
@@ -27,6 +28,16 @@ def delete_despatch(despatch_id):
         # Return error message if despatch_id does not correspond to a despatch advice
         if 'Attributes' not in response:
             return build_response(404, JSON_TYPE, f'Despatch advice {despatch_id} not found')
+
+        key = f"dispatches/{despatch_id}.xml"
+
+        try:
+            s3.s3_client.delete_object(
+                Bucket=s3.BUCKET_NAME,
+                Key=key
+            )
+        except ClientError as e:
+            print('Error:', e)
 
         # Else return deletion confirmation message
         return build_response(204, JSON_TYPE, f'Despatch advice {despatch_id} was deleted successfully.')
