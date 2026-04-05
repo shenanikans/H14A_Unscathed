@@ -1,5 +1,6 @@
 # Import required modules for the API
 from botocore.exceptions import ClientError
+import src.s3 as s3
 
 # Import helper function and constants to build the JSON response
 from src.helper_functions import build_response
@@ -24,8 +25,20 @@ def retrieve_despatch(despatch_id):
         if 'Item' not in response:
             return build_response(404, JSON_TYPE, f'Despatch advice {despatch_id} not found')
 
+        key = f"dispatches/{despatch_id}.xml"
+
+        try:
+            s3_response = s3.s3_client.get_object(
+                Bucket=s3.BUCKET_NAME,
+                Key=key
+            )
+            xml_string = s3_response['Body'].read().decode('utf-8')
+        except ClientError as e:
+            print('Error:', e)
+            return build_response(404, JSON_TYPE, f'Despatch advice {despatch_id} not found')
+
         # Else return the despatch advice document
-        return build_response(200, XML_TYPE, response['Item']['despatch_ubl']) 
+        return build_response(200, XML_TYPE, xml_string) 
 
     except ClientError as e:
         print('Error:', e)

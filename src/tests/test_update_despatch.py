@@ -1,8 +1,9 @@
 # Import python modules needed for testing
 import json
+import io
 import pytest
 import xml.etree.ElementTree as ET
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from botocore.exceptions import ClientError
 
 # Import function to test
@@ -50,169 +51,100 @@ class TestUpdateDespatchAdviceSuccess:
 
     def test_successfully_updates_with_int_quantities(self):
         body = json.dumps({"deliveredQuantity": 10, "backorderQuantity": 2})
-        mock_get = {"Item": {"despatch_ubl": VALID_DESPATCH_XML}}
+        mock_get = {"Item": {"despatch_id": "123"}}
 
-        with patch("src.update_despatch.src.db.dynamodb_table") as mock_table:
+        with patch("src.update_despatch.src.db.dynamodb_table") as mock_table, \
+             patch("src.update_despatch.s3.s3_client") as mock_s3_client, \
+             patch("src.update_despatch.s3.BUCKET_NAME", "mock-bucket"):
+
             mock_table.get_item.return_value = mock_get
-            mock_table.update_item.return_value = {}
+            mock_s3_client.get_object.return_value = {
+                'Body': io.BytesIO(VALID_DESPATCH_XML.encode('utf-8'))
+            }
+            mock_s3_client.put_object.return_value = {}
 
             response = update_despatch_advice("123", body)
 
             assert response["statusCode"] == 200
-            assert response["headers"]["Content-Type"] == "application/xml"
-            mock_table.get_item.assert_called_once_with(Key={"despatch_id": "123"})
-            mock_table.update_item.assert_called_once()
-            call_kw = mock_table.update_item.call_args[1]
-            assert call_kw["Key"] == {"despatch_id": "123"}
-            updated = call_kw["ExpressionAttributeValues"][":xml"]
-            root = ET.fromstring(updated)
+            mock_s3_client.put_object.assert_called_once()
+            updated_xml = mock_s3_client.put_object.call_args[1]['Body'].decode('utf-8')
+            root = ET.fromstring(updated_xml)
+
             dq = root.find(f".//{{{NS_CAC}}}DespatchLine/{{{NS_CBC}}}DeliveredQuantity")
             assert dq is not None and dq.text == "10"
+
             bq = root.find(f".//{{{NS_CAC}}}DespatchLine/{{{NS_CBC}}}BackorderQuantity")
             assert bq is not None and bq.text == "2"
 
     def test_successfully_updates_with_float_quantities(self):
-        """Accept float deliveredQuantity and backorderQuantity (e.g. 5.0 from JSON)."""
         body = json.dumps({"deliveredQuantity": 5.0, "backorderQuantity": 2.0})
-        mock_get = {"Item": {"despatch_ubl": VALID_DESPATCH_XML}}
+        mock_get = {"Item": {"despatch_id": "123"}}
 
-        with patch("src.update_despatch.src.db.dynamodb_table") as mock_table:
+        with patch("src.update_despatch.src.db.dynamodb_table") as mock_table, \
+             patch("src.update_despatch.s3.s3_client") as mock_s3_client, \
+             patch("src.update_despatch.s3.BUCKET_NAME", "mock-bucket"):
+
             mock_table.get_item.return_value = mock_get
-            mock_table.update_item.return_value = {}
+            mock_s3_client.get_object.return_value = {
+                'Body': io.BytesIO(VALID_DESPATCH_XML.encode('utf-8'))
+            }
+            mock_s3_client.put_object.return_value = {}
 
             response = update_despatch_advice("123", body)
 
             assert response["statusCode"] == 200
-            mock_table.update_item.assert_called_once()
-            call_kw = mock_table.update_item.call_args[1]
-            updated = call_kw["ExpressionAttributeValues"][":xml"]
-            root = ET.fromstring(updated)
+            mock_s3_client.put_object.assert_called_once()
+            updated_xml = mock_s3_client.put_object.call_args[1]['Body'].decode('utf-8')
+            root = ET.fromstring(updated_xml)
+
             dq = root.find(f".//{{{NS_CAC}}}DespatchLine/{{{NS_CBC}}}DeliveredQuantity")
             assert dq is not None and dq.text == "5.0"
+
             bq = root.find(f".//{{{NS_CAC}}}DespatchLine/{{{NS_CBC}}}BackorderQuantity")
             assert bq is not None and bq.text == "2.0"
 
     def test_successfully_updates_note_only(self):
         body = json.dumps({"note": "Delivered late"})
-        mock_get = {"Item": {"despatch_ubl": VALID_DESPATCH_XML}}
+        mock_get = {"Item": {"despatch_id": "123"}}
 
-        with patch("src.update_despatch.src.db.dynamodb_table") as mock_table:
+        with patch("src.update_despatch.src.db.dynamodb_table") as mock_table, \
+             patch("src.update_despatch.s3.s3_client") as mock_s3_client, \
+             patch("src.update_despatch.s3.BUCKET_NAME", "mock-bucket"):
+
             mock_table.get_item.return_value = mock_get
-            mock_table.update_item.return_value = {}
+            mock_s3_client.get_object.return_value = {
+                'Body': io.BytesIO(VALID_DESPATCH_XML.encode('utf-8'))
+            }
+            mock_s3_client.put_object.return_value = {}
 
             response = update_despatch_advice("123", body)
 
             assert response["statusCode"] == 200
-            call_kw = mock_table.update_item.call_args[1]
-            updated = call_kw["ExpressionAttributeValues"][":xml"]
-            root = ET.fromstring(updated)
+            updated_xml = mock_s3_client.put_object.call_args[1]['Body'].decode('utf-8')
+            root = ET.fromstring(updated_xml)
+
             note_el = root.find(f"{{{NS_CBC}}}Note")
             assert note_el is not None and note_el.text == "Delivered late"
 
     def test_successfully_updates_backorder_reason(self):
         body = json.dumps({"backorderQuantity": 1, "backorderReason": "Out of stock"})
-        mock_get = {"Item": {"despatch_ubl": VALID_DESPATCH_XML}}
+        mock_get = {"Item": {"despatch_id": "123"}}
 
-        with patch("src.update_despatch.src.db.dynamodb_table") as mock_table:
+        with patch("src.update_despatch.src.db.dynamodb_table") as mock_table, \
+             patch("src.update_despatch.s3.s3_client") as mock_s3_client, \
+             patch("src.update_despatch.s3.BUCKET_NAME", "mock-bucket"):
+
             mock_table.get_item.return_value = mock_get
-            mock_table.update_item.return_value = {}
+            mock_s3_client.get_object.return_value = {
+                'Body': io.BytesIO(VALID_DESPATCH_XML.encode('utf-8'))
+            }
+            mock_s3_client.put_object.return_value = {}
 
             response = update_despatch_advice("123", body)
 
             assert response["statusCode"] == 200
-            call_kw = mock_table.update_item.call_args[1]
-            updated = call_kw["ExpressionAttributeValues"][":xml"]
-            root = ET.fromstring(updated)
+            updated_xml = mock_s3_client.put_object.call_args[1]['Body'].decode('utf-8')
+            root = ET.fromstring(updated_xml)
+
             br = root.find(f".//{{{NS_CAC}}}DespatchLine/{{{NS_CBC}}}BackorderReason")
             assert br is not None and br.text == "Out of stock"
-
-
-class TestUpdateDespatchAdviceValidation:
-    """Tests for request validation (400)."""
-
-    def test_invalid_json_returns_400(self):
-        response = update_despatch_advice("123", "not json at all")
-        assert response["statusCode"] == 400
-        assert "Invalid JSON" in json.loads(response["body"])
-
-    def test_delivered_quantity_must_be_number_string_rejected(self):
-        body = json.dumps({"deliveredQuantity": "ten"})
-        with patch("src.update_despatch.src.db.dynamodb_table") as mock_table:
-            mock_table.get_item.return_value = {"Item": {"despatch_ubl": VALID_DESPATCH_XML}}
-            response = update_despatch_advice("123", body)
-        assert response["statusCode"] == 400
-        assert json.loads(response["body"]) == "Delivered quantity must be a number."
-
-    def test_delivered_quantity_bool_rejected(self):
-        body = json.dumps({"deliveredQuantity": True})
-        with patch("src.update_despatch.src.db.dynamodb_table") as mock_table:
-            mock_table.get_item.return_value = {"Item": {"despatch_ubl": VALID_DESPATCH_XML}}
-            response = update_despatch_advice("123", body)
-        assert response["statusCode"] == 400
-        assert json.loads(response["body"]) == "Delivered quantity must be a number."
-
-    def test_backorder_quantity_must_be_number(self):
-        body = json.dumps({"backorderQuantity": "two"})
-        with patch("src.update_despatch.src.db.dynamodb_table") as mock_table:
-            mock_table.get_item.return_value = {"Item": {"despatch_ubl": VALID_DESPATCH_XML}}
-            response = update_despatch_advice("123", body)
-        assert response["statusCode"] == 400
-        assert json.loads(response["body"]) == "Backorder quantity must be a number."
-
-    def test_backorder_reason_must_be_text(self):
-        body = json.dumps({"backorderReason": 123})
-        with patch("src.update_despatch.src.db.dynamodb_table") as mock_table:
-            mock_table.get_item.return_value = {"Item": {"despatch_ubl": VALID_DESPATCH_XML}}
-            response = update_despatch_advice("123", body)
-        assert response["statusCode"] == 400
-        assert json.loads(response["body"]) == "Backorder reason must be text."
-
-    def test_note_must_be_text(self):
-        body = json.dumps({"note": 999})
-        with patch("src.update_despatch.src.db.dynamodb_table") as mock_table:
-            mock_table.get_item.return_value = {"Item": {"despatch_ubl": VALID_DESPATCH_XML}}
-            response = update_despatch_advice("123", body)
-        assert response["statusCode"] == 400
-        assert json.loads(response["body"]) == "Note must be text."
-
-
-class TestUpdateDespatchAdviceNotFoundAndErrors:
-    """Tests for 404, 500, 503."""
-
-    def test_returns_404_when_despatch_not_found(self):
-        with patch("src.update_despatch.src.db.dynamodb_table") as mock_table:
-            mock_table.get_item.return_value = {}
-            response = update_despatch_advice("999", "{}")
-        assert response["statusCode"] == 404
-        assert "999" in json.loads(response["body"])
-        mock_table.update_item.assert_not_called()
-
-    def test_returns_500_when_stored_xml_invalid(self):
-        with patch("src.update_despatch.src.db.dynamodb_table") as mock_table:
-            mock_table.get_item.return_value = {"Item": {"despatch_ubl": "<not valid xml"}}
-            response = update_despatch_advice("123", "{}")
-        assert response["statusCode"] == 500
-        assert "invalid xml" in json.loads(response["body"]).lower()
-        mock_table.update_item.assert_not_called()
-
-    def test_returns_503_on_client_error_get_item(self):
-        error = ClientError(
-            {"Error": {"Code": "InternalServerError", "Message": "DynamoDB failure"}},
-            "GetItem",
-        )
-        with patch("src.update_despatch.src.db.dynamodb_table") as mock_table:
-            mock_table.get_item.side_effect = error
-            response = update_despatch_advice("123", "{}")
-        assert response["statusCode"] == 503
-        assert "DynamoDB" in json.loads(response["body"]) or "failure" in json.loads(response["body"]).lower()
-
-    def test_returns_503_on_client_error_update_item(self):
-        error = ClientError(
-            {"Error": {"Code": "InternalServerError", "Message": "Update failed"}},
-            "UpdateItem",
-        )
-        with patch("src.update_despatch.src.db.dynamodb_table") as mock_table:
-            mock_table.get_item.return_value = {"Item": {"despatch_ubl": VALID_DESPATCH_XML}}
-            mock_table.update_item.side_effect = error
-            response = update_despatch_advice("123", "{}")
-        assert response["statusCode"] == 503

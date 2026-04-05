@@ -1,5 +1,6 @@
 # Import required modules for the API
 from botocore.exceptions import ClientError
+import src.s3 as s3
 
 # Import helper function and constants to build the JSON response
 from src.helper_functions import build_response
@@ -25,8 +26,21 @@ def retrieve_all_despatch_advice():
         # Get the items from the response
         items = response.get('Items', [])
 
-        # Extract the stored documents
-        despatch_documents = [item['despatch_ubl'] for item in items] 
+        despatch_documents = []
+
+        for item in items:
+            despatch_id = item['despatch_id']
+            key = f"dispatches/{despatch_id}.xml"
+
+            try:
+                s3_response = s3.s3_client.get_object(
+                    Bucket=s3.BUCKET_NAME,
+                    Key=key
+                )
+                xml_string = s3_response['Body'].read().decode('utf-8')
+                despatch_documents.append(xml_string)
+            except ClientError as e:
+                print('Error:', e)
 
         # Wrap them in a single UBL container
         all_despatches = (
@@ -43,4 +57,3 @@ def retrieve_all_despatch_advice():
         print('Error:', e)
         response = build_response(503, JSON_TYPE, e.response['Error']['Message'])
     return response
-

@@ -1,6 +1,6 @@
 # Import python modules needed for testing
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from botocore.exceptions import ClientError
 from src.constants import XML_TYPE, JSON_TYPE
 
@@ -30,14 +30,27 @@ class TestRetrieveAllDespatchAdvice:
     def test_successfully_retrieves_all_despatch_advice(self):
         # Existing despatch advices are wrapped in a DespatchAdviceList container.
         # Simulate a response for multiple despatch advice documents
-        mock_response = [
-            {"despatch_ubl": "<DespatchAdvice><ID>1</ID></DespatchAdvice>"},
-            {"despatch_ubl": "<DespatchAdvice><ID>2</ID></DespatchAdvice>"}
+        mock_dynamodb_response = [
+            {"despatch_id": "1"},
+            {"despatch_id": "2"}
         ]
 
-        with patch("src.db.dynamodb_table") as mock_table:
-            # Retrieve all despatch advice documents
-            mock_table.scan.return_value = {"Items": mock_response}
+        mock_s3_objects = {
+            "dispatches/1.xml": b"<DespatchAdvice><ID>1</ID></DespatchAdvice>",
+            "dispatches/2.xml": b"<DespatchAdvice><ID>2</ID></DespatchAdvice>"
+        }
+
+        with patch("src.db.dynamodb_table") as mock_table, \
+             patch("src.s3.s3_client") as mock_s3_client, \
+             patch("src.s3.BUCKET_NAME", "mock-bucket"):
+
+            mock_table.scan.return_value = {"Items": mock_dynamodb_response}
+
+            def mock_get_object(Bucket, Key):
+                return {"Body": MagicMock(read=lambda: mock_s3_objects[Key])}
+
+            mock_s3_client.get_object.side_effect = mock_get_object
+
             response = retrieve_all_despatch_advice()
 
         # Check that the correct response was returned
@@ -53,10 +66,13 @@ class TestRetrieveAllDespatchAdvice:
 
     def test_fails_to_retrieve_when_no_despatch_advice_exists(self):
         # Empty scan should still return an empty DespatchAdviceList container.
-        mock_response = []
+        mock_dynamodb_response = []
 
-        with patch("src.db.dynamodb_table") as mock_table:
-            mock_table.scan.return_value = {"Items": mock_response}
+        with patch("src.db.dynamodb_table") as mock_table, \
+             patch("src.s3.s3_client") as mock_s3_client, \
+             patch("src.s3.BUCKET_NAME", "mock-bucket"):
+
+            mock_table.scan.return_value = {"Items": mock_dynamodb_response}
 
             # Try to retrieve non-existent despatch advice
             response = retrieve_all_despatch_advice()
@@ -71,4 +87,3 @@ class TestRetrieveAllDespatchAdvice:
         assert body.endswith("</DespatchAdviceList>")
         # No inner DespatchAdvice documents when there are no items
         assert "<DespatchAdvice>" not in body
-

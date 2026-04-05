@@ -70,21 +70,21 @@ def make_event(xml_string):
 
 
 def parse_response_xml(response):
-    """Helper to parse the returned despatch XML string (body may be JSON-encoded via build_response)."""
     body = response['body']
-    if isinstance(body, str) and body.strip().startswith('"'):
+    if isinstance(body, str) and body.startswith('"'):
         body = json.loads(body)
-    return ET.fromstring(body.encode() if isinstance(body, str) else body)
+    return ET.fromstring(body)
 
 
 # ── Tests: valid despatch advice ─────────────────────────────────────────────
 
 class TestValidDespatch:
-
+    @patch("src.s3.s3_client")
     @patch('src.db.dynamodb_table')
     @patch('src.generate_despatch.xmlschema.XMLSchema')
     def test_successfully_generates_despatch_advice(self, mock_schema, mock_db):
         mock_schema.return_value.validate.return_value = None  # skip real schema
+        mock_s3.put_object.return_value = {}
         response = generate_despatch(VALID_ORDER_XML)
         assert response['statusCode'] == 200
         assert response['headers']['Content-Type'] == XML_TYPE
@@ -93,6 +93,15 @@ class TestValidDespatch:
         root = parse_response_xml(response)
         assert root is not None
 
+    @patch("src.s3.s3_client")
+    @patch('src.db.dynamodb_table')
+    @patch('src.generate_despatch.xmlschema.XMLSchema')
+    def test_order_reference_id_matches(self, mock_schema, mock_db, mock_s3):
+        mock_schema.return_value.validate.return_value = None
+        mock_s3.put_object.return_value = {}
+
+        response = generate_despatch(VALID_ORDER_XML)
+        root = parse_response_xml(response)
         order_ref_id = root.findtext(
             f'.//{{{NS_CAC}}}OrderReference/{{{NS_CBC}}}ID'
         )
@@ -112,9 +121,10 @@ class TestValidDespatch:
         assert end is not None
         assert end > start  # end date is after start date
 
+    @patch("src.s3.s3_client")
     @patch('src.db.dynamodb_table')
     @patch('src.generate_despatch.xmlschema.XMLSchema')
-    def test_multiple_order_lines(self, mock_schema, mock_db):
+    def test_multiple_order_lines(self, mock_schema, mock_db, mock_s3):
         mock_schema.return_value.validate.return_value = None
         multi_line_xml = VALID_ORDER_XML.replace(
             '</Order>',
@@ -123,6 +133,8 @@ class TestValidDespatch:
                 <cac:Item><cbc:Name>Widget B</cbc:Name></cac:Item>
                </cac:OrderLine></Order>"""
         )
+        mock_s3.put_object.return_value = {}
+
         response = generate_despatch(multi_line_xml)
         root = parse_response_xml(response)
         lines = root.findall(
