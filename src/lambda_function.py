@@ -29,11 +29,11 @@ def _auth_error_response(message: str):
 
 
 def _require_auth(event):
-    """Returns None if OK, else a Lambda response dict."""
+    """Returns (claims, response). If response is not None, caller should return it."""
     claims, err = get_auth_context(event)
     if err:
-        return _auth_error_response(err)
-    return None
+        return None, _auth_error_response(err)
+    return claims, None
 
 
 def lambda_handler(event, context):
@@ -71,20 +71,20 @@ def lambda_handler(event, context):
         if http_method == 'GET' and path == HEALTH_CHECK_PATH:
             return health_check(event, context)
         elif http_method == 'POST' and path == DESPATCH_ADVICE_PATH:
-            blocked = _require_auth(event)
+            claims, blocked = _require_auth(event)
             if blocked:
                 response = blocked
             else:
                 body = event.get('body') or ''
-                response = generate_despatch(body)
+                response = generate_despatch(body, claims.get("email"))
         elif http_method == 'GET' and path == DESPATCH_ADVICE_PATH:
-            blocked = _require_auth(event)
+            claims, blocked = _require_auth(event)
             if blocked:
                 response = blocked
             else:
-                response = retrieve_all_despatch_advice()
+                response = retrieve_all_despatch_advice(claims.get("email"))
         elif http_method == 'GET' and path.startswith(DESPATCH_ADVICE_PATH) and path_parameters:
-            blocked = _require_auth(event)
+            claims, blocked = _require_auth(event)
             if blocked:
                 response = blocked
             else:
@@ -95,9 +95,9 @@ def lambda_handler(event, context):
                     response = build_response(404, JSON_TYPE, "Not Found")
                 else:
                     # Pass through as string to match DynamoDB partition key type
-                    response = retrieve_despatch(despatch_id)
+                    response = retrieve_despatch(claims.get("email"), despatch_id)
         elif http_method == 'PUT' and path.startswith(DESPATCH_ADVICE_PATH) and path_parameters:
-            blocked = _require_auth(event)
+            claims, blocked = _require_auth(event)
             if blocked:
                 response = blocked
             else:
@@ -107,9 +107,9 @@ def lambda_handler(event, context):
                 if not despatch_id:
                     response = build_response(404, JSON_TYPE, "Not Found")
                 else:
-                    response = update_despatch_advice(despatch_id, body)
+                    response = update_despatch_advice(claims.get("email"), despatch_id, body)
         elif http_method == 'DELETE' and path.startswith(DESPATCH_ADVICE_PATH) and path_parameters:
-            blocked = _require_auth(event)
+            claims, blocked = _require_auth(event)
             if blocked:
                 response = blocked
             else:
@@ -118,7 +118,7 @@ def lambda_handler(event, context):
                 if not despatch_id:
                     response = build_response(404, JSON_TYPE, "Not Found")
                 else:
-                    response = delete_despatch(despatch_id)
+                    response = delete_despatch(claims.get("email"), despatch_id)
         else:
             response = build_response(404, JSON_TYPE, 'Not Found')
 
