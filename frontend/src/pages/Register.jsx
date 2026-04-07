@@ -10,7 +10,18 @@ function Register() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  return <div>Register</div>
+  async function handleRegister() {
+    setLoading(true)
+    setError('')
+    const res = await register(email, password, name)
+    if (res.ok) {
+      navigate('/')
+    } else {
+      const data = await res.json()
+      setError(data || 'Registration failed')
+    }
+    setLoading(false)
+  }
 }
 
 export default Register
