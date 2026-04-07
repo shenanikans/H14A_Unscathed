@@ -1,5 +1,11 @@
+import Layout from '../components/layout'
+
 function Create() {
-  return <div>Create page</div>
+  return (
+    <Layout>
+      <h1>Create Despatch</h1>
+    </Layout>
+  )
 }
 
 export default Create
