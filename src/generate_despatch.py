@@ -138,7 +138,7 @@ def append_party(parent, party: dict):
         if contact.get('telefax'):   cbc_add(ce, 'Telefax',        contact['telefax'])
         if contact.get('email'):     cbc_add(ce, 'ElectronicMail', contact['email'])
 
-def generate_despatch(order_xml_string):
+def generate_despatch(order_xml_string, email_id: str):
     try:
         root = ET.fromstring(order_xml_string.encode())
 
@@ -279,15 +279,20 @@ def generate_despatch(order_xml_string):
 
         despatch_xml_bytes = ET.tostring(da, encoding='utf-8', xml_declaration=True)
         
-        # Store in DynamoDB and return
+        # Store in S3 + DynamoDB mapping and return
         despatch_xml = ET.tostring(da, encoding='unicode')
         try:
-            s3.s3_client.put_object(s3.BUCKET_NAME, f"dispatches/{despatch_id}.xml", despatch_xml_bytes, 'application/xml')
+            s3.s3_client.put_object(
+                Bucket=s3.BUCKET_NAME,
+                Key=f"dispatches/{despatch_id}.xml",
+                Body=despatch_xml_bytes,
+                ContentType="application/xml",
+            )
 
             src.db.dynamodb_table.put_item(
-                {
-                    'despatch_id': despatch_id,
-                    ## 'user_id': 'blahblah'
+                Item={
+                    "email_id": email_id,
+                    "despatch_id": despatch_id,
                 }
             )
 
