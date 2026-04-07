@@ -3,7 +3,7 @@ import requests
 import xml.etree.ElementTree as ET
 
 BASE_URL = "https://y1j7xv2ua6.execute-api.us-east-1.amazonaws.com/v1/api/despatch"
-AUTH_BASE_URL_V2 = "https://y1j7xv2ua6.execute-api.us-east-1.amazonaws.com/v1/api/auth"
+AUTH_BASE_URL_V2 = "https://y1j7xv2ua6.execute-api.us-east-1.amazonaws.com/v2/api/auth"
 
 NS_CBC = 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2'
 NS_CAC = 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2'
