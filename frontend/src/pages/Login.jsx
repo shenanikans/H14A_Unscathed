@@ -57,6 +57,16 @@ function Login() {
         <button className="btn-primary" onClick={handleLogin} disabled={loading}>
           {loading ? 'Signing in...' : 'Sign In'}
         </button>
+
+        <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '13px' }}>
+          Don't have an account?{' '}
+          <span
+            style={{ color: '#2389a0', fontWeight: 600, cursor: 'pointer' }}
+            onClick={() => navigate('/register')}
+          >
+            Sign up
+          </span>
+        </p>
       </div>
     </div>
   )
