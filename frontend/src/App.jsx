@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard'
 import Create from './pages/Create'
 import ViewDespatch from './pages/ViewDespatch'
 import PrivateRoute from './components/privateroute'
+import Register from './pages/Register'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/create" element={<PrivateRoute><Create /></PrivateRoute>} />
         <Route path="/despatch/:id" element={<PrivateRoute><ViewDespatch /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" />} />
+        <Route path="/register" element={<Register />} />
       </Routes>
     </BrowserRouter>
   )
