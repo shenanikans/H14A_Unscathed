@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-name'
+import { useNavigate } from 'react-router-dom'
 import { register } from '../api/despatch'
 
 function Register() {
