@@ -76,7 +76,7 @@ class TestLambdaRetrieveDespatchById:
 
     @patch('src.lambda_function.get_auth_context', return_value=({"sub": "u1", "email": "user@example.com"}, None))
     @patch('src.lambda_function.retrieve_despatch')
-    def test_get_despatch_by_id_returns_404_when_despatch_id_missing(self, mock_retrieve):
+    def test_get_despatch_by_id_returns_404_when_despatch_id_missing(self, mock_retrieve, _mock_auth):
         path = DESPATCH_ADVICE_PATH + '/12345'
         response = lambda_handler(
             make_event('GET', path, path_params={}),
@@ -114,7 +114,7 @@ class TestLambdaUpdateDespatch:
 
     @patch('src.lambda_function.get_auth_context', return_value=({"sub": "u1", "email": "user@example.com"}, None))
     @patch('src.lambda_function.update_despatch_advice')
-    def test_put_despatch_returns_404_when_despatch_id_missing(self, mock_update):
+    def test_put_despatch_returns_404_when_despatch_id_missing(self, mock_update, _mock_auth):
         path = DESPATCH_ADVICE_PATH + '/999'
         response = lambda_handler(
             make_event('PUT', path, path_params={}),
@@ -139,7 +139,7 @@ class TestLambdaDeleteDespatch:
 
     @patch('src.lambda_function.get_auth_context', return_value=({"sub": "u1", "email": "user@example.com"}, None))
     @patch('src.lambda_function.delete_despatch')
-    def test_delete_despatch_returns_404_when_despatch_id_missing(self, mock_delete):
+    def test_delete_despatch_returns_404_when_despatch_id_missing(self, mock_delete, _mock_auth):
         path = DESPATCH_ADVICE_PATH + '/12345'
         response = lambda_handler(
             make_event('DELETE', path, path_params={}),
