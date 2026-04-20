@@ -74,12 +74,12 @@ class TestLambdaRetrieveDespatchById:
         mock_retrieve.assert_called_once_with("user@example.com", '12345')
         assert response['statusCode'] == 200
 
-    @patch('src.lambda_function.get_auth_context', return_value=({"sub": "u1", "email": "user@example.com"}, None))
+    # @patch('src.lambda_function.get_auth_context', return_value=({"sub": "u1", "email": "user@example.com"}, None))
     @patch('src.lambda_function.retrieve_despatch')
-    def test_get_despatch_by_id_returns_404_when_despatch_id_missing(self, mock_retrieve, _mock_auth):
+    def test_get_despatch_by_id_returns_404_when_despatch_id_missing(self, mock_retrieve):
         path = DESPATCH_ADVICE_PATH + '/12345'
         response = lambda_handler(
-            make_event('GET', path, path_params={}),
+            make_event('GET', path, path_params={'despatch-id': None}),
             {}
         )
         mock_retrieve.assert_not_called()
