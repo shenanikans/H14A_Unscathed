@@ -117,7 +117,7 @@ def login(event):
 
 def logout(event):
     """POST /api/auth/logout — Bearer token; records jti in revocations table if configured."""
-    from src.auth_dependencies import extract_bearer_token, extract_order_access_token, extract_order_refresh_token
+    from src.auth_dependencies import extract_bearer_token
 
     token = extract_bearer_token(event)
     if not token:

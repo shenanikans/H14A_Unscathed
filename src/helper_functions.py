@@ -14,7 +14,7 @@ def _cors_headers():
         "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
     }
 
-def build_response(status_code, content_type, body):
+def build_response(status_code, content_type, body, extra_headers=None):
     """Builds a response object to be returned by the lambda handler using the provided status code, content-type, and body.
 
     Args:
@@ -29,14 +29,18 @@ def build_response(status_code, content_type, body):
 
     if content_type == XML_TYPE:
         response_body = body if isinstance(body, str) else str(body)
-
+    elif status_code == 204 and body == "":
+        response_body = ""
     else:
         response_body = body
 
+    headers = {"Content-Type": content_type}
+    headers.update(_cors_headers())
+    if extra_headers:
+        headers.update(extra_headers)
+
     return {
-        'statusCode': status_code,
-        'headers': {
-            'Content-Type': content_type
-        },
-        'body': response_body
+        "statusCode": status_code,
+        "headers": headers,
+        "body": response_body,
     }
