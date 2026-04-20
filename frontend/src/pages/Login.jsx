@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
+
 export default function Login() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -31,13 +32,24 @@ export default function Login() {
                 <form onSubmit={handleSubmit}>
                     <input type="email" className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4" placeholder="Email" value={email}
                         onChange={(event) => setEmail(event.target.value)}/>
-                    <input type="password" className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4" placeholder="Password" value={password}
-                        onChange={(event) => setPassword(event.target.value)}/>
+                    <div className="relative mb-4">
+                        <input 
+                            type={showPassword ? 'text' : 'password'}
+                            className="w-full border border-gray-300 rounded-lg px-4 py-2 pr-12"
+                            placeholder="Password" 
+                            value={password}
+                            onChange={(event) => setPassword(event.target.value)}/>
+                        <button 
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-2 text-gray-500 text-sm">
+                            {showPassword ? 'Hide' : 'Show'}
+                        </button>
+                    </div>
                     <button type="submit" className="w-full bg-deep-sky-blue-600 text-white py-2 rounded-lg hover:bg-deep-sky-blue-700">Log In</button>
                 </form>
                 <p className="text-sm text-gray-500 mt-4 text-center">Don't have an account? <Link to="/register" className="text-deep-sky-blue-600 hover:underline">Sign up</Link></p>
             </div>
-            
         </div>
     )
 }
