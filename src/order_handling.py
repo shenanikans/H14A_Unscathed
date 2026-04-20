@@ -1,38 +1,26 @@
 # Import required modules for the API
 from botocore.exceptions import ClientError
 import requests
+import json
 from datetime import datetime
 
 # Import helper function and constants to build the JSON response
 from src.helper_functions import build_response
-from src.constants import JSON_TYPE, XML_TYPE, ORDER_URL, UNSCATHED_SELLER_ID
-from src.auth_dependencies import extract_order_access_token, extract_order_refresh_token
+from src.constants import JSON_TYPE, XML_TYPE, ORDER_URL, UNSCATHED_SELLER_ID, UNSCATHED_EMAIL, UNSCATHED_PW
 
-def createOrder(event):
+def createOrder():
     try:
-        body = event.get('body') or '{}'
-        orderAccessToken = extract_order_access_token(event)
-        orderRefreshToken = extract_order_refresh_token(event)
-        refreshBody = { "refreshToken": orderRefreshToken }
-        refreshResponse = requests.post(f"{ORDER_URL}/auth/refresh", json=refreshBody)
+        loginBody = {
+            "email": UNSCATHED_EMAIL,
+            "password": UNSCATHED_PW
+        }
+        loginResponse = requests.post(f"{ORDER_URL}/auth/login", json=loginBody)
+        if loginResponse.status_code != 200:
+            return build_response(503, JSON_TYPE, loginResponse.json())
 
-        if refreshResponse.status_code != 200:
-            email = (body.get("email") or "").strip().lower()
-            password = body.get("password") or ""
-
-            reloginBody = {
-                "email": email,
-                "password": password
-            }
-            reloginResponse = requests.post(f"{ORDER_URL}/auth/login", json=reloginBody)
-            if reloginResponse.status_code != 200:
-                return build_response(503, JSON_TYPE, "Error occurred. Please login again.")
-            else:
-                orderAccessToken = reloginResponse.json.accessToken
-                orderRefreshToken = reloginResponse.json.refreshToken
-        else:
-            orderAccessToken = refreshResponse.json.accessToken
-            orderRefreshToken = refreshResponse.json.refreshToken
+        orderAccessToken = loginResponse.json()['accessToken']
+        orderRefreshToken = loginResponse.json()['refreshToken']
+        # body = event.get('body') or '{}'
 
         authorization = "Bearer " + orderAccessToken
         headers = {
@@ -41,18 +29,19 @@ def createOrder(event):
 
         retrieveCartResponse = requests.get(f"{ORDER_URL}/cart", headers=headers)
         if retrieveCartResponse.status_code != 200:
-            return build_response(retrieveCartResponse.status_code, JSON_TYPE, retrieveCartResponse.json)
+            return build_response(retrieveCartResponse.status_code, JSON_TYPE, retrieveCartResponse.json())
 
-        cart = retrieveCartResponse.json.items
+        cart = retrieveCartResponse.json()['items']
         order_items = []
         for item in cart:
             new_item = {
-                "itemID": item.item_id,
-                "quantity": item.quantity,
-                "priceAtPurchase": item.price
+                "itemID": item['item_id'],
+                "quantity": item['quantity'],
+                "priceAtPurchase": float(item['price'])
             }
             order_items.append(new_item)
 
+        now = datetime.now()
         order_time = now.strftime("%Y-%m-%d %H:%M:%S")
 
         order_info = {
@@ -68,135 +57,123 @@ def createOrder(event):
             "orderLines": order_items
         }
 
+        logoutBody = {
+            "refreshToken": orderRefreshToken
+        }
+        # print(order_items)
+
         createOrderResponse = requests.post(f"{ORDER_URL}/orders", json=order_info, headers=headers)
-        return build_response(createOrderResponse.status_code, JSON_TYPE, createOrderResponse.json)
+        xml = createOrderResponse.text
+        clearCartResponse = requests.delete(f"{ORDER_URL}/cart", headers=headers)
+        logoutResponse = requests.post(f"{ORDER_URL}/auth/logout", json=logoutBody, headers=headers)
+        return build_response(createOrderResponse.status_code, XML_TYPE, xml)
 
     except ClientError as e:
         print('Error:', e)
         return build_response(503, JSON_TYPE, e.response['Error']['Message'])
 
-def retrieveOrderById(event):
+def retrieveOrderById(order_id):
     try:
-        body = event.get('body') or '{}'
-        orderAccessToken = extract_order_access_token(event)
-        orderRefreshToken = extract_order_refresh_token(event)
-        refreshBody = { "refreshToken": orderRefreshToken }
-        refreshResponse = requests.post(f"{ORDER_URL}/auth/refresh", json=refreshBody)
+        loginBody = {
+            "email": UNSCATHED_EMAIL,
+            "password": UNSCATHED_PW
+        }
+        loginResponse = requests.post(f"{ORDER_URL}/auth/login", json=loginBody)
+        if loginResponse.status_code != 200:
+            return build_response(503, JSON_TYPE, loginResponse.json())
 
-        if refreshResponse.status_code != 200:
-            email = (body.get("email") or "").strip().lower()
-            password = body.get("password") or ""
-
-            reloginBody = {
-                "email": email,
-                "password": password
-            }
-            reloginResponse = requests.post(f"{ORDER_URL}/auth/login", json=reloginBody)
-            if reloginResponse.status_code != 200:
-                return build_response(503, JSON_TYPE, "Error occurred. Please login again.")
-            else:
-                orderAccessToken = reloginResponse.json.accessToken
-                orderRefreshToken = reloginResponse.json.refreshToken
-        else:
-            orderAccessToken = refreshResponse.json.accessToken
-            orderRefreshToken = refreshResponse.json.refreshToken
+        orderAccessToken = loginResponse.json()['accessToken']
+        orderRefreshToken = loginResponse.json()['refreshToken']
+        # body = event.get('body') or '{}'
 
         authorization = "Bearer " + orderAccessToken
         headers = {
             "Authorization": authorization
         }
 
-        order_id = event['pathParameters'].get('order-id')
+        logoutBody = {
+            "refreshToken": orderRefreshToken
+        }
+
+        # order_id = event['pathParameters'].get('order-id')
 
         retrieveOrderResponse = requests.get(f"{ORDER_URL}/orders/{order_id}", headers=headers)
-        return build_response(retrieveOrderResponse.status_code, JSON_TYPE, retrieveOrderResponse.json)
+        logoutResponse = requests.post(f"{ORDER_URL}/auth/logout", json=logoutBody, headers=headers)
+        return build_response(retrieveOrderResponse.status_code, JSON_TYPE, retrieveOrderResponse.json())
 
     except ClientError as e:
         print('Error:', e)
         return build_response(503, JSON_TYPE, e.response['Error']['Message'])
 
-def updateOrder(event):
+def updateOrder(order_id, body):
     try:
-        body = event.get('body') or '{}'
-        orderAccessToken = extract_order_access_token(event)
-        orderRefreshToken = extract_order_refresh_token(event)
-        refreshBody = { "refreshToken": orderRefreshToken }
-        refreshResponse = requests.post(f"{ORDER_URL}/auth/refresh", json=refreshBody)
+        loginBody = {
+            "email": UNSCATHED_EMAIL,
+            "password": UNSCATHED_PW
+        }
+        loginResponse = requests.post(f"{ORDER_URL}/auth/login", json=loginBody)
+        if loginResponse.status_code != 200:
+            return build_response(503, JSON_TYPE, loginResponse.json())
 
-        if refreshResponse.status_code != 200:
-            email = (body.get("email") or "").strip().lower()
-            password = body.get("password") or ""
-
-            reloginBody = {
-                "email": email,
-                "password": password
-            }
-            reloginResponse = requests.post(f"{ORDER_URL}/auth/login", json=reloginBody)
-            if reloginResponse.status_code != 200:
-                return build_response(503, JSON_TYPE, "Error occurred. Please login again.")
-            else:
-                orderAccessToken = reloginResponse.json.accessToken
-                orderRefreshToken = reloginResponse.json.refreshToken
-        else:
-            orderAccessToken = refreshResponse.json.accessToken
-            orderRefreshToken = refreshResponse.json.refreshToken
+        orderAccessToken = loginResponse.json()['accessToken']
+        orderRefreshToken = loginResponse.json()['refreshToken']
+        # body = event.get('body') or '{}'
 
         authorization = "Bearer " + orderAccessToken
         headers = {
             "Authorization": authorization
         }
 
-        order_id = event['pathParameters'].get('order-id')
-        order_time = now.strftime("%Y-%m-%d %H:%M:%S")
-        update_body = {
-            "userId": body.get("user-id", ""),
-            "updates": {
-                "orderName": body.get("order-name", order_time),
-                "accountingCost": body.get("accounting-cost", 150)
-            }
+        # order_id = event['pathParameters'].get('order-id')
+        # order_time = now.strftime("%Y-%m-%d %H:%M:%S")
+        # update_body = {
+        #     "userId": body.get("user-id", ""),
+        #     "updates": {
+        #         "orderName": body.get("order-name", order_time),
+        #         "accountingCost": body.get("accounting-cost", 150)
+        #     }
+        # }
+        update_body = body
+
+        logoutBody = {
+            "refreshToken": orderRefreshToken
         }
 
-        updateOrderResponse = requests.put(f"{ORDER_URL}/orders/{order_id}", headers=headers)
-        return build_response(updateOrderResponse.status_code, JSON_TYPE, updateOrderResponse.json)
+        updateOrderResponse = requests.put(f"{ORDER_URL}/orders/{order_id}", json=update_body, headers=headers)
+        logoutResponse = requests.post(f"{ORDER_URL}/auth/logout", json=logoutBody, headers=headers)
+        return build_response(updateOrderResponse.status_code, JSON_TYPE, updateOrderResponse.json())
 
     except ClientError as e:
         print('Error:', e)
         return build_response(503, JSON_TYPE, e.response['Error']['Message'])
 
-def deleteOrder(event):
+def deleteOrder(order_id):
     try:
-        body = event.get('body') or '{}'
-        orderAccessToken = extract_order_access_token(event)
-        orderRefreshToken = extract_order_refresh_token(event)
-        refreshBody = { "refreshToken": orderRefreshToken }
-        refreshResponse = requests.post(f"{ORDER_URL}/auth/refresh", json=refreshBody)
+        loginBody = {
+            "email": UNSCATHED_EMAIL,
+            "password": UNSCATHED_PW
+        }
+        loginResponse = requests.post(f"{ORDER_URL}/auth/login", json=loginBody)
+        if loginResponse.status_code != 200:
+            return build_response(503, JSON_TYPE, loginResponse.json())
 
-        if refreshResponse.status_code != 200:
-            email = (body.get("email") or "").strip().lower()
-            password = body.get("password") or ""
-
-            reloginBody = {
-                "email": email,
-                "password": password
-            }
-            reloginResponse = requests.post(f"{ORDER_URL}/auth/login", json=reloginBody)
-            if reloginResponse.status_code != 200:
-                return build_response(503, JSON_TYPE, "Error occurred. Please login again.")
-            else:
-                orderAccessToken = reloginResponse.json.accessToken
-                orderRefreshToken = reloginResponse.json.refreshToken
-        else:
-            orderAccessToken = refreshResponse.json.accessToken
-            orderRefreshToken = refreshResponse.json.refreshToken
+        orderAccessToken = loginResponse.json()['accessToken']
+        orderRefreshToken = loginResponse.json()['refreshToken']
+        # body = event.get('body') or '{}'
 
         authorization = "Bearer " + orderAccessToken
         headers = {
             "Authorization": authorization
         }
 
-        order_id = event['pathParameters'].get('order-id')
+        logoutBody = {
+            "refreshToken": orderRefreshToken
+        }
+
+        # order_id = event['pathParameters'].get('order-id')
         deleteOrderResponse = requests.delete(f"{ORDER_URL}/orders/{order_id}", headers=headers)
-        return build_response(deleteOrderResponse.status_code, JSON_TYPE, deleteOrderResponse.json)
+        logoutResponse = requests.post(f"{ORDER_URL}/auth/logout", json=logoutBody, headers=headers)
+        return build_response(deleteOrderResponse.status_code, JSON_TYPE, deleteOrderResponse.json())
 
     except ClientError as e:
         print('Error:', e)

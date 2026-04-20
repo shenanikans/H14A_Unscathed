@@ -1,205 +1,171 @@
 # Import required modules for the API
 from botocore.exceptions import ClientError
 import requests
+import json
 
 # Import helper function and constants to build the JSON response
 from src.helper_functions import build_response
-from src.constants import JSON_TYPE, XML_TYPE, ORDER_URL
-from src.auth_dependencies import extract_order_access_token, extract_order_refresh_token
+from src.constants import JSON_TYPE, ORDER_URL, UNSCATHED_EMAIL, UNSCATHED_PW
 
-def addItemToShoppingCart(event):
+def addItemToShoppingCart(body):
     try:
-        body = event.get('body') or '{}'
-        orderAccessToken = extract_order_access_token(event)
-        orderRefreshToken = extract_order_refresh_token(event)
-        refreshBody = { "refreshToken": orderRefreshToken }
-        refreshResponse = requests.post(f"{ORDER_URL}/auth/refresh", json=refreshBody)
-
-        if refreshResponse.status_code != 200:
-            email = (body.get("email") or "").strip().lower()
-            password = body.get("password") or ""
-
-            reloginBody = {
-                "email": email,
-                "password": password
-            }
-            reloginResponse = requests.post(f"{ORDER_URL}/auth/login", json=reloginBody)
-            if reloginResponse.status_code != 200:
-                return build_response(503, JSON_TYPE, "Error occurred. Please login again.")
-            else:
-                orderAccessToken = reloginResponse.json.accessToken
-                orderRefreshToken = reloginResponse.json.refreshToken
-        else:
-            orderAccessToken = refreshResponse.json.accessToken
-            orderRefreshToken = refreshResponse.json.refreshToken
-
-        item = {
-            "itemId": body.get("itemId", ""),
-            "quantity": int(body.get("quantity", ""))
+        loginBody = {
+            "email": UNSCATHED_EMAIL,
+            "password": UNSCATHED_PW
         }
+        loginResponse = requests.post(f"{ORDER_URL}/auth/login", json=loginBody)
+        if loginResponse.status_code != 200:
+            return build_response(503, JSON_TYPE, loginResponse.json())
+
+        orderAccessToken = loginResponse.json()['accessToken']
+        orderRefreshToken = loginResponse.json()['refreshToken']
+        # body = event.get('body') or '{}'
+
+        # item = {
+        #     "itemId": body.get("itemId", ""),
+        #     "quantity": int(body.get("quantity", ""))
+        # }
 
         authorization = "Bearer " + orderAccessToken
         headers = {
             "Authorization": authorization
         }
+
+        logoutBody = {
+            "refreshToken": orderRefreshToken
+        }
     
-        addToCartResponse = requests.post(f"{ORDER_URL}/cart/items", json=item, headers=headers)
-        return build_response(addToCartResponse.status_code, JSON_TYPE, addToCartResponse.json)
+        addToCartResponse = requests.post(f"{ORDER_URL}/cart/items", json=body, headers=headers)
+        logoutResponse = requests.post(f"{ORDER_URL}/auth/logout", json=logoutBody, headers=headers)
+
+        return build_response(addToCartResponse.status_code, JSON_TYPE, addToCartResponse.json())
 
     except ClientError as e:
         print('Error:', e)
         return build_response(503, JSON_TYPE, e.response['Error']['Message'])
 
-def removeItemFromShoppingCart(event):
+def removeItemFromShoppingCart(itemId):
     try:
-        body = event.get('body') or '{}'
-        orderAccessToken = extract_order_access_token(event)
-        orderRefreshToken = extract_order_refresh_token(event)
-        refreshBody = { "refreshToken": orderRefreshToken }
-        refreshResponse = requests.post(f"{ORDER_URL}/auth/refresh", json=refreshBody)
+        loginBody = {
+            "email": UNSCATHED_EMAIL,
+            "password": UNSCATHED_PW
+        }
+        loginResponse = requests.post(f"{ORDER_URL}/auth/login", json=loginBody)
+        if loginResponse.status_code != 200:
+            return build_response(503, JSON_TYPE, loginResponse.json())
 
-        if refreshResponse.status_code != 200:
-            email = (body.get("email") or "").strip().lower()
-            password = body.get("password") or ""
-
-            reloginBody = {
-                "email": email,
-                "password": password
-            }
-            reloginResponse = requests.post(f"{ORDER_URL}/auth/login", json=reloginBody)
-            if reloginResponse.status_code != 200:
-                return build_response(503, JSON_TYPE, "Error occurred. Please login again.")
-            else:
-                orderAccessToken = reloginResponse.json.accessToken
-                orderRefreshToken = reloginResponse.json.refreshToken
-        else:
-            orderAccessToken = refreshResponse.json.accessToken
-            orderRefreshToken = refreshResponse.json.refreshToken
+        orderAccessToken = loginResponse.json()['accessToken']
+        orderRefreshToken = loginResponse.json()['refreshToken']
+        # body = event.get('body') or '{}'
 
         authorization = "Bearer " + orderAccessToken
         headers = {
             "Authorization": authorization
         }
-    
-        itemId = event['pathParameters'].get('item-id')
+
+        logoutBody = {
+            "refreshToken": orderRefreshToken
+        }
+
+        # itemId = event['pathParameters'].get('item-id')
         removeFromCartResponse = requests.delete(f"{ORDER_URL}/cart/items/{itemId}", headers=headers)
-        return build_response(removeFromCartResponse.status_code, JSON_TYPE, removeFromCartResponse.json)
+        logoutResponse = requests.post(f"{ORDER_URL}/auth/logout", json=logoutBody, headers=headers)
+        return build_response(removeFromCartResponse.status_code, JSON_TYPE, removeFromCartResponse.json())
 
     except ClientError as e:
         print('Error:', e)
         return build_response(503, JSON_TYPE, e.response['Error']['Message'])
 
-def updateItemInShoppingCart(event):
+def updateItemInShoppingCart(itemId, quantity):
     try:
-        body = event.get('body') or '{}'
-        orderAccessToken = extract_order_access_token(event)
-        orderRefreshToken = extract_order_refresh_token(event)
-        refreshBody = { "refreshToken": orderRefreshToken }
-        refreshResponse = requests.post(f"{ORDER_URL}/auth/refresh", json=refreshBody)
+        loginBody = {
+            "email": UNSCATHED_EMAIL,
+            "password": UNSCATHED_PW
+        }
+        loginResponse = requests.post(f"{ORDER_URL}/auth/login", json=loginBody)
+        if loginResponse.status_code != 200:
+            return build_response(503, JSON_TYPE, loginResponse.json())
 
-        if refreshResponse.status_code != 200:
-            email = (body.get("email") or "").strip().lower()
-            password = body.get("password") or ""
-
-            reloginBody = {
-                "email": email,
-                "password": password
-            }
-            reloginResponse = requests.post(f"{ORDER_URL}/auth/login", json=reloginBody)
-            if reloginResponse.status_code != 200:
-                return build_response(503, JSON_TYPE, "Error occurred. Please login again.")
-            else:
-                orderAccessToken = reloginResponse.json.accessToken
-                orderRefreshToken = reloginResponse.json.refreshToken
-        else:
-            orderAccessToken = refreshResponse.json.accessToken
-            orderRefreshToken = refreshResponse.json.refreshToken
+        orderAccessToken = loginResponse.json()['accessToken']
+        orderRefreshToken = loginResponse.json()['refreshToken']
+        # body = event.get('body') or '{}'
 
         authorization = "Bearer " + orderAccessToken
         headers = {
             "Authorization": authorization
         }
 
-        itemId = event['pathParameters'].get('item-id')
-        quantity = (body.get("quantity") or "")
-        updateCartResponse = requests.update(f"{ORDER_URL}/cart/items/{itemId}", json={ "quantity": quantity }, headers=headers)
-        return build_response(updateCartResponse.status_code, JSON_TYPE, updateCartResponse.json)
+        logoutBody = {
+            "refreshToken": orderRefreshToken
+        }
+
+        # itemId = event['pathParameters'].get('item-id')
+        # quantity = (body.get("quantity") or "")
+        updateCartResponse = requests.put(f"{ORDER_URL}/cart/items/{itemId}", json={ "quantity": quantity }, headers=headers)
+        logoutResponse = requests.post(f"{ORDER_URL}/auth/logout", json=logoutBody, headers=headers)
+        return build_response(updateCartResponse.status_code, JSON_TYPE, updateCartResponse.json())
 
     except ClientError as e:
         print('Error:', e)
         return build_response(503, JSON_TYPE, e.response['Error']['Message'])
 
-def retrieveShoppingCart(event):
+def retrieveShoppingCart():
     try:
-        body = event.get('body') or '{}'
-        orderAccessToken = extract_order_access_token(event)
-        orderRefreshToken = extract_order_refresh_token(event)
-        refreshBody = { "refreshToken": orderRefreshToken }
-        refreshResponse = requests.post(f"{ORDER_URL}/auth/refresh", json=refreshBody)
+        loginBody = {
+            "email": UNSCATHED_EMAIL,
+            "password": UNSCATHED_PW
+        }
+        loginResponse = requests.post(f"{ORDER_URL}/auth/login", json=loginBody)
+        if loginResponse.status_code != 200:
+            return build_response(503, JSON_TYPE, loginResponse.json())
 
-        if refreshResponse.status_code != 200:
-            email = (body.get("email") or "").strip().lower()
-            password = body.get("password") or ""
-
-            reloginBody = {
-                "email": email,
-                "password": password
-            }
-            reloginResponse = requests.post(f"{ORDER_URL}/auth/login", json=reloginBody)
-            if reloginResponse.status_code != 200:
-                return build_response(503, JSON_TYPE, "Error occurred. Please login again.")
-            else:
-                orderAccessToken = reloginResponse.json.accessToken
-                orderRefreshToken = reloginResponse.json.refreshToken
-        else:
-            orderAccessToken = refreshResponse.json.accessToken
-            orderRefreshToken = refreshResponse.json.refreshToken
+        orderAccessToken = loginResponse.json()['accessToken']
+        orderRefreshToken = loginResponse.json()['refreshToken']
+        # body = event.get('body') or '{}'
 
         authorization = "Bearer " + orderAccessToken
         headers = {
             "Authorization": authorization
+        }
+
+        logoutBody = {
+            "refreshToken": orderRefreshToken
         }
 
         retrieveCartResponse = requests.get(f"{ORDER_URL}/cart", headers=headers)
-        return build_response(retrieveCartResponse.status_code, JSON_TYPE, retrieveCartResponse.json)
+        logoutResponse = requests.post(f"{ORDER_URL}/auth/logout", json=logoutBody, headers=headers)
+        return build_response(retrieveCartResponse.status_code, JSON_TYPE, retrieveCartResponse.json())
 
     except ClientError as e:
         print('Error:', e)
         return build_response(503, JSON_TYPE, e.response['Error']['Message'])
 
-def clearShoppingCart(event):
+def clearShoppingCart():
     try:
-        body = event.get('body') or '{}'
-        orderAccessToken = extract_order_access_token(event)
-        orderRefreshToken = extract_order_refresh_token(event)
-        refreshBody = { "refreshToken": orderRefreshToken }
-        refreshResponse = requests.post(f"{ORDER_URL}/auth/refresh", json=refreshBody)
+        loginBody = {
+            "email": UNSCATHED_EMAIL,
+            "password": UNSCATHED_PW
+        }
+        loginResponse = requests.post(f"{ORDER_URL}/auth/login", json=loginBody)
+        if loginResponse.status_code != 200:
+            return build_response(503, JSON_TYPE, loginResponse.json())
 
-        if refreshResponse.status_code != 200:
-            email = (body.get("email") or "").strip().lower()
-            password = body.get("password") or ""
-
-            reloginBody = {
-                "email": email,
-                "password": password
-            }
-            reloginResponse = requests.post(f"{ORDER_URL}/auth/login", json=reloginBody)
-            if reloginResponse.status_code != 200:
-                return build_response(503, JSON_TYPE, "Error occurred. Please login again.")
-            else:
-                orderAccessToken = reloginResponse.json.accessToken
-                orderRefreshToken = reloginResponse.json.refreshToken
-        else:
-            orderAccessToken = refreshResponse.json.accessToken
-            orderRefreshToken = refreshResponse.json.refreshToken
+        orderAccessToken = loginResponse.json()['accessToken']
+        orderRefreshToken = loginResponse.json()['refreshToken']
+        # body = event.get('body') or '{}'
 
         authorization = "Bearer " + orderAccessToken
         headers = {
             "Authorization": authorization
         }
 
+        logoutBody = {
+            "refreshToken": orderRefreshToken
+        }
+
         clearCartResponse = requests.delete(f"{ORDER_URL}/cart", headers=headers)
-        return build_response(clearCartResponse.status_code, JSON_TYPE, clearCartResponse.json)
+        logoutResponse = requests.post(f"{ORDER_URL}/auth/logout", json=logoutBody, headers=headers)
+        return build_response(clearCartResponse.status_code, JSON_TYPE, clearCartResponse.json())
 
     except ClientError as e:
         print('Error:', e)

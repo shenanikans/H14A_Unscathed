@@ -12,7 +12,7 @@ import secrets
 from botocore.exceptions import ClientError
 
 from src.helper_functions import build_response
-from src.constants import JSON_TYPE
+from src.constants import JSON_TYPE, ORDER_URL
 import src.users_db as users_db
 from src.auth_tokens import create_access_token, decode_and_verify
 import jwt
@@ -75,15 +75,6 @@ def register(event):
         print("Error:", e)
         return build_response(503, JSON_TYPE, e.response["Error"]["Message"])
 
-    order_register_body = {
-        "email": email,
-        "username": name,
-        "password": password
-    }
-    response = requests.post(f"{ORDER_URL}/auth/register", json=order_register_body)
-    if response.status_code != 201:
-        return build_response(503, JSON_TYPE, "Unable to register user")
-
     return build_response(
         201,
         JSON_TYPE,
@@ -113,23 +104,13 @@ def login(event):
 
     token, _jti, expires_in = create_access_token(user["user_id"], user["email"])
 
-    order_login_body = {
-        "email": email,
-        "password": password
-    }
-    response = requests.post(f"{ORDER_URL}/auth/login", json=order_login_body)
-    if response.status_code != 200:
-        return build_response(503, JSON_TYPE, "Unable to login user")
-
     return build_response(
         200,
         JSON_TYPE,
         {
             "accessToken": token,
             "tokenType": "Bearer",
-            "expiresIn": expires_in,
-            "orderAccessToken": response.json.accessToken,
-            "orderRefreshToken": response.json.refreshToken
+            "expiresIn": expires_in
         },
     )
 
@@ -153,19 +134,5 @@ def logout(event):
     exp = claims.get("exp")
     if jti and isinstance(exp, (int, float)):
         users_db.put_revoked_jti(jti, int(exp))
-
-    orderAccessToken = extract_order_access_token(event)
-    orderRefreshToken = extract_order_refresh_token(event)
-
-    order_logout_body = {
-        "refreshToken": orderRefreshToken
-    }
-
-    order_logout_authorization = "Bearer " + orderAccessToken
-    order_headers = {
-        "Authorization": order_logout_authorization
-    }
-    
-    response = requests.post(f"{ORDER_URL}/auth/logout", json=order_logout_body, headers=order_headers)
 
     return build_response(204, JSON_TYPE, "")
