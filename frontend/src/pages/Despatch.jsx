@@ -62,7 +62,7 @@ export default function Despatch() {
                         <tbody>
                             {filteredDespatch.map((d, index) => (
                                 <tr key={index} className="hover:bg-gray-50 border-b border-gray-100">
-                                    <td className="px-4 py-3 text-deep-sky-blue-600">{d.id}</td>
+                                    <td className="px-4 py-3 text-deep-sky-blue-600"><Link to={`/despatch/${d.id}`}>{d.id}</Link></td>
                                     <td className="px-4 py-3">{d.orderId}</td>
                                     <td className="px-4 py-3 text-gray-500">{d.date}</td>
                                     <td className="px-4 py-3">
