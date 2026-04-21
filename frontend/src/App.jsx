@@ -9,6 +9,9 @@ import Orders from './pages/Orders'
 import CreateOrder from './pages/CreateOrder'
 import Despatch from './pages/Despatch'
 import ViewDespatch from './pages/ViewDespatch'
+import Invoices from './pages/Invoices'
+import Settings from './pages/Settings'
+import Profile from './pages/Profile'
 
 export  default function App() {
   return (
@@ -24,6 +27,9 @@ export  default function App() {
         <Route path="/create-order" element={<CreateOrder/>} />
         <Route path="/despatch" element={<Despatch/>} />
         <Route path="/despatch/:id" element={<ViewDespatch/>} />
+        <Route path="/invoices" element={<Invoices/>} />
+        <Route path="/settings" element={<Settings/>} />
+        <Route path="/profile" element={<Profile/>} />
       </Routes>
     </BrowserRouter>
   )
