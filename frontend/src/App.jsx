@@ -5,6 +5,8 @@ import Landing from './pages/Landing'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import Dashboard from './pages/Dashboard'
+import Orders from './pages/Orders'
+import CreateOrder from './pages/CreateOrder'
 
 export  default function App() {
   return (
@@ -16,6 +18,8 @@ export  default function App() {
         <Route path="/privacy-policy" element={<Privacy/>} />
         <Route path="/terms" element={<Terms/>} />
         <Route path="/dashboard" element={<Dashboard/>} />
+        <Route path="/orders" element={<Orders/>} />
+        <Route path="/create-order" element={<CreateOrder/>} />
       </Routes>
     </BrowserRouter>
   )
