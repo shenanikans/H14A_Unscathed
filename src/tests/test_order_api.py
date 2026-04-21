@@ -31,7 +31,7 @@ class Test:
             "quantityAvailable": 100,
             "imageUrl": "https://example.com/images/mouse.png"
         }
-        makeItemResponse = request.post(f"{ORDER_URL}/items", json=item)
+        makeItemResponse = requests.post(f"{ORDER_URL}/items", json=item)
         assert makeItemResponse.status_code == 200
         item_id = makeItemResponse.json()['item'][0]['item_id']
 
