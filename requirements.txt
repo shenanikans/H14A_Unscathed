@@ -18,6 +18,7 @@ cryptography @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/a
 distro @ file:///Users/builder/cbouss/perseverance-python-buildout/croot/distro_1728591855492/work
 elementpath==5.1.1
 frozendict @ file:///Users/builder/cbouss/perseverance-python-buildout/croot/frozendict_1728605521897/work
+google-auth
 idna @ file:///Users/builder/cbouss/perseverance-python-buildout/croot/idna_1728585920859/work
 iniconfig==2.3.0
 jsonpatch @ file:///Users/builder/cbouss/perseverance-python-buildout/croot/jsonpatch_1728594556110/work

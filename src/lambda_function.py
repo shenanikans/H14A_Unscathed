@@ -10,7 +10,7 @@ from src.retrieve_despatch import retrieve_despatch
 from src.generate_despatch import generate_despatch
 from src.retrieve_all_despatch import retrieve_all_despatch_advice
 from src.update_despatch import update_despatch_advice
-from src.auth_service import register, login, logout
+from src.auth_service import register, login, logout, google_login
 from src.auth_dependencies import get_auth_context
 
 # Initialise URL constants
@@ -22,6 +22,7 @@ AUTH_BASE = '/api/auth'
 AUTH_REGISTER_PATH = AUTH_BASE + '/register'
 AUTH_LOGIN_PATH = AUTH_BASE + '/login'
 AUTH_LOGOUT_PATH = AUTH_BASE + '/logout'
+GOOGLE_AUTH_PATH = AUTH_BASE + '/google'
 
 
 def _auth_error_response(message: str):
@@ -125,6 +126,8 @@ def lambda_handler(event, context):
                 'headers': {'Content-Type': 'text/html'},
                 'body': swagger_ui()
             }
+        elif http_method == 'POST' and path == GOOGLE_AUTH_PATH:
+            return google_login(event)
         else:
             response = build_response(404, JSON_TYPE, 'Not Found')
 
