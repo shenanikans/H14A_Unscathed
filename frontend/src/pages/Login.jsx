@@ -20,6 +20,7 @@ export default function Login() {
         const data = await response.json()
 
         if (response.status === 200) {
+            localStorage.removeItem('token')
             localStorage.setItem('accessToken', data.accessToken)
             navigate('/dashboard')
         } else {

@@ -12,6 +12,7 @@ import ViewDespatch from './pages/ViewDespatch'
 import Invoices from './pages/Invoices'
 import Settings from './pages/Settings'
 import Profile from './pages/Profile'
+import CreateDespatch from './pages/CreateDespatch'
 
 export  default function App() {
   return (
@@ -30,6 +31,7 @@ export  default function App() {
         <Route path="/invoices" element={<Invoices/>} />
         <Route path="/settings" element={<Settings/>} />
         <Route path="/profile" element={<Profile/>} />
+        <Route path="/create-despatch" element={<CreateDespatch/>} />
       </Routes>
     </BrowserRouter>
   )
