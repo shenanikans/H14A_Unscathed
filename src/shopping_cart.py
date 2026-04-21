@@ -19,12 +19,6 @@ def addItemToShoppingCart(body):
 
         orderAccessToken = loginResponse.json()['accessToken']
         orderRefreshToken = loginResponse.json()['refreshToken']
-        # body = event.get('body') or '{}'
-
-        # item = {
-        #     "itemId": body.get("itemId", ""),
-        #     "quantity": int(body.get("quantity", ""))
-        # }
 
         authorization = "Bearer " + orderAccessToken
         headers = {
@@ -56,7 +50,6 @@ def removeItemFromShoppingCart(itemId):
 
         orderAccessToken = loginResponse.json()['accessToken']
         orderRefreshToken = loginResponse.json()['refreshToken']
-        # body = event.get('body') or '{}'
 
         authorization = "Bearer " + orderAccessToken
         headers = {
@@ -67,7 +60,6 @@ def removeItemFromShoppingCart(itemId):
             "refreshToken": orderRefreshToken
         }
 
-        # itemId = event['pathParameters'].get('item-id')
         removeFromCartResponse = requests.delete(f"{ORDER_URL}/cart/items/{itemId}", headers=headers)
         logoutResponse = requests.post(f"{ORDER_URL}/auth/logout", json=logoutBody, headers=headers)
         return build_response(removeFromCartResponse.status_code, JSON_TYPE, removeFromCartResponse.json())
@@ -88,7 +80,6 @@ def updateItemInShoppingCart(itemId, quantity):
 
         orderAccessToken = loginResponse.json()['accessToken']
         orderRefreshToken = loginResponse.json()['refreshToken']
-        # body = event.get('body') or '{}'
 
         authorization = "Bearer " + orderAccessToken
         headers = {
@@ -99,8 +90,6 @@ def updateItemInShoppingCart(itemId, quantity):
             "refreshToken": orderRefreshToken
         }
 
-        # itemId = event['pathParameters'].get('item-id')
-        # quantity = (body.get("quantity") or "")
         updateCartResponse = requests.put(f"{ORDER_URL}/cart/items/{itemId}", json={ "quantity": quantity }, headers=headers)
         logoutResponse = requests.post(f"{ORDER_URL}/auth/logout", json=logoutBody, headers=headers)
         return build_response(updateCartResponse.status_code, JSON_TYPE, updateCartResponse.json())
@@ -121,7 +110,6 @@ def retrieveShoppingCart():
 
         orderAccessToken = loginResponse.json()['accessToken']
         orderRefreshToken = loginResponse.json()['refreshToken']
-        # body = event.get('body') or '{}'
 
         authorization = "Bearer " + orderAccessToken
         headers = {
@@ -152,7 +140,6 @@ def clearShoppingCart():
 
         orderAccessToken = loginResponse.json()['accessToken']
         orderRefreshToken = loginResponse.json()['refreshToken']
-        # body = event.get('body') or '{}'
 
         authorization = "Bearer " + orderAccessToken
         headers = {

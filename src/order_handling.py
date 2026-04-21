@@ -20,7 +20,6 @@ def createOrder():
 
         orderAccessToken = loginResponse.json()['accessToken']
         orderRefreshToken = loginResponse.json()['refreshToken']
-        # body = event.get('body') or '{}'
 
         authorization = "Bearer " + orderAccessToken
         headers = {
@@ -60,7 +59,6 @@ def createOrder():
         logoutBody = {
             "refreshToken": orderRefreshToken
         }
-        # print(order_items)
 
         createOrderResponse = requests.post(f"{ORDER_URL}/orders", json=order_info, headers=headers)
         xml = createOrderResponse.text
@@ -84,7 +82,6 @@ def retrieveOrderById(order_id):
 
         orderAccessToken = loginResponse.json()['accessToken']
         orderRefreshToken = loginResponse.json()['refreshToken']
-        # body = event.get('body') or '{}'
 
         authorization = "Bearer " + orderAccessToken
         headers = {
@@ -94,8 +91,6 @@ def retrieveOrderById(order_id):
         logoutBody = {
             "refreshToken": orderRefreshToken
         }
-
-        # order_id = event['pathParameters'].get('order-id')
 
         retrieveOrderResponse = requests.get(f"{ORDER_URL}/orders/{order_id}", headers=headers)
         logoutResponse = requests.post(f"{ORDER_URL}/auth/logout", json=logoutBody, headers=headers)
@@ -117,22 +112,12 @@ def updateOrder(order_id, body):
 
         orderAccessToken = loginResponse.json()['accessToken']
         orderRefreshToken = loginResponse.json()['refreshToken']
-        # body = event.get('body') or '{}'
 
         authorization = "Bearer " + orderAccessToken
         headers = {
             "Authorization": authorization
         }
 
-        # order_id = event['pathParameters'].get('order-id')
-        # order_time = now.strftime("%Y-%m-%d %H:%M:%S")
-        # update_body = {
-        #     "userId": body.get("user-id", ""),
-        #     "updates": {
-        #         "orderName": body.get("order-name", order_time),
-        #         "accountingCost": body.get("accounting-cost", 150)
-        #     }
-        # }
         update_body = body
 
         logoutBody = {
@@ -159,7 +144,6 @@ def deleteOrder(order_id):
 
         orderAccessToken = loginResponse.json()['accessToken']
         orderRefreshToken = loginResponse.json()['refreshToken']
-        # body = event.get('body') or '{}'
 
         authorization = "Bearer " + orderAccessToken
         headers = {
@@ -170,7 +154,6 @@ def deleteOrder(order_id):
             "refreshToken": orderRefreshToken
         }
 
-        # order_id = event['pathParameters'].get('order-id')
         deleteOrderResponse = requests.delete(f"{ORDER_URL}/orders/{order_id}", headers=headers)
         logoutResponse = requests.post(f"{ORDER_URL}/auth/logout", json=logoutBody, headers=headers)
         return build_response(deleteOrderResponse.status_code, JSON_TYPE, deleteOrderResponse.json())

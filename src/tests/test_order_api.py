@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 NS_CBC = 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2'
 NS_CAC = 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2'
 
-item_id = "f95f66f2-228c-4447-b3e1-32e501426b4e"
+# item_id = "f95f66f2-228c-4447-b3e1-32e501426b4e"
 
 def parse_response_xml(body):
     if isinstance(body, str) and body.strip().startswith('"'):
@@ -23,6 +23,18 @@ def get_order_id(response):
 class Test:
 
     def test_order(self):
+        # make item
+        item = {
+            "itemName": "Wireless Mouse",
+            "description": "Ergonomic wireless mouse with 2.4GHz receiver",
+            "price": 29.99,
+            "quantityAvailable": 100,
+            "imageUrl": "https://example.com/images/mouse.png"
+        }
+        makeItemResponse = request.post(f"{ORDER_URL}/items", json=item)
+        assert makeItemResponse.status_code == 200
+        item_id = makeItemResponse.json()['item'][0]['item_id']
+
         # add to cart
         addToCartResponse = addItemToShoppingCart({ "itemId": item_id, "quantity": 2 })
         assert addToCartResponse["statusCode"] == 200
@@ -30,11 +42,6 @@ class Test:
         # check cart
         retrieveCartResponse = retrieveShoppingCart()
         assert retrieveCartResponse["statusCode"] == 200
-
-        # update cart
-        # updateCartResponse = updateItemInShoppingCart(item_id, 3)
-        # # assert updateCartResponse.statusCode == 200
-        # assert updateCartResponse["statusCode"] == 200
 
         # delete from cart
         deleteFromCartResponse = removeItemFromShoppingCart(item_id)
