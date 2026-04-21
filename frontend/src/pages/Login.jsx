@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 
 export default function Login() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
+    const navigate = useNavigate()
     const handleSubmit = async (event) => {
         event.preventDefault()
 
@@ -19,7 +21,7 @@ export default function Login() {
 
         if (response.status === 200) {
             localStorage.setItem('accessToken', data.accessToken)
-            console.log('Logged in successfully')
+            navigate('/dashboard')
         } else {
             console.log('Invalid email or password')
         }

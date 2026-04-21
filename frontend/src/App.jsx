@@ -4,6 +4,7 @@ import Register from './pages/Register'
 import Landing from './pages/Landing'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
+import Dashboard from './pages/Dashboard'
 
 export  default function App() {
   return (
@@ -14,6 +15,7 @@ export  default function App() {
         <Route path="/register" element={<Register/>} />
         <Route path="/privacy-policy" element={<Privacy/>} />
         <Route path="/terms" element={<Terms/>} />
+        <Route path="/dashboard" element={<Dashboard/>} />
       </Routes>
     </BrowserRouter>
   )
