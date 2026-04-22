@@ -4,7 +4,7 @@ from botocore.exceptions import ClientError
 
 # Import functions and constants that perform the core data processing
 from src.helper_functions import build_response
-from src.constants import JSON_TYPE, ORDER_URL
+from src.constants import JSON_TYPE, ORDER_URL, INVOICE_URL
 from src.delete_despatch import delete_despatch
 from src.retrieve_despatch import retrieve_despatch
 from src.generate_despatch import generate_despatch

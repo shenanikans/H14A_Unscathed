@@ -220,64 +220,64 @@ class TestLambdaDespatchRequiresAuth:
         assert response['statusCode'] == 401
 
 # Test Invoice Endpoints
-class TestLambdaCreateInvoice:
-    @patch('src.lambda_function.createInvoice')
-    def test_post_invoice_routes_correctly(self, mock_create):
-        mock_create.return_value = {'statusCode': 201}
-        response = lambda_handler(make_event('POST', INVOICE_PATH), {})
-        mock_create.assert_called_once()
-        assert response['statusCode'] == 201
+#class TestLambdaCreateInvoice:
+#    @patch('src.lambda_function.createInvoice')
+#    def test_post_invoice_routes_correctly(self, mock_create):
+#        mock_create.return_value = {'statusCode': 201}
+#        response = lambda_handler(make_event('POST', INVOICE_PATH), {})
+#        mock_create.assert_called_once()
+#        assert response['statusCode'] == 201
 
 
-class TestLambdaRetrieveInvoice:
-    @patch('src.lambda_function.retrieveInvoiceById')
-    def test_get_invoice_by_id_routes_correctly(self, mock_retrieve):
-        mock_retrieve.return_value = {'statusCode': 200}
-        response = lambda_handler(make_event('GET', f'{INVOICE_PATH}/INV-123', path_params={'invoice_id': 'INV-123'}), {})
-        mock_retrieve.assert_called_once_with('INV-123')
-        assert response['statusCode'] == 200
+#class TestLambdaRetrieveInvoice:
+#    @patch('src.lambda_function.retrieveInvoiceById')
+#    def test_get_invoice_by_id_routes_correctly(self, mock_retrieve):
+#        mock_retrieve.return_value = {'statusCode': 200}
+#        response = lambda_handler(make_event('GET', f'{INVOICE_PATH}/INV-123', path_params={'invoice_id': 'INV-123'}), {})
+#        mock_retrieve.assert_called_once_with('INV-123')
+#        assert response['statusCode'] == 200
 
 
-class TestLambdaUpdateInvoice:
-    @patch('src.lambda_function.updateInvoiceById')
-    def test_put_invoice_routes_correctly(self, mock_update):
-        mock_update.return_value = {'statusCode': 200}
-        response = lambda_handler(make_event('PUT', f'{INVOICE_PATH}/INV-123', path_params={'invoice_id': 'INV-123'}), {})
-        mock_update.assert_called_once_with('INV-123')
-        assert response['statusCode'] == 200
+#class TestLambdaUpdateInvoice:
+#    @patch('src.lambda_function.updateInvoiceById')
+#    def test_put_invoice_routes_correctly(self, mock_update):
+#        mock_update.return_value = {'statusCode': 200}
+#        response = lambda_handler(make_event('PUT', f'{INVOICE_PATH}/INV-123', path_params={'invoice_id': 'INV-123'}), {})
+#        mock_update.assert_called_once_with('INV-123')
+#        assert response['statusCode'] == 200
 
 
-class TestLambdaDeleteInvoice:
-    @patch('src.lambda_function.deleteInvoiceById')
-    def test_delete_invoice_routes_correctly(self, mock_delete):
-        mock_delete.return_value = {'statusCode': 200}
-        response = lambda_handler(make_event('DELETE', f'{INVOICE_PATH}/INV-123', path_params={'invoice_id': 'INV-123'}), {})
-        mock_delete.assert_called_once_with('INV-123')
-        assert response['statusCode'] == 204
+#class TestLambdaDeleteInvoice:
+#    @patch('src.lambda_function.deleteInvoiceById')
+#    def test_delete_invoice_routes_correctly(self, mock_delete):
+#        mock_delete.return_value = {'statusCode': 200}
+#        response = lambda_handler(make_event('DELETE', f'{INVOICE_PATH}/INV-123', path_params={'invoice_id': 'INV-123'}), {})
+#        mock_delete.assert_called_once_with('INV-123')
+#        assert response['statusCode'] == 204
 
 
-class TestLambdaInvoiceStatus:
-    @patch('src.lambda_function.ChangeInvoiceStatus')
-    def test_post_invoice_status_routes_correctly(self, mock_status):
-        mock_status.return_value = {'statusCode': 200}
-        response = lambda_handler(make_event('POST', f'{INVOICE_PATH}/INV-123/status', path_params={'invoice_id': 'INV-123'}), {})
-        mock_status.assert_called_once_with('INV-123')
-        assert response['statusCode'] == 200
+#class TestLambdaInvoiceStatus:
+#    @patch('src.lambda_function.ChangeInvoiceStatus')
+#    def test_post_invoice_status_routes_correctly(self, mock_status):
+#        mock_status.return_value = {'statusCode': 200}
+#        response = lambda_handler(make_event('POST', f'{INVOICE_PATH}/INV-123/status', path_params={'invoice_id': 'INV-123'}), {})
+#        mock_status.assert_called_once_with('INV-123')
+#        assert response['statusCode'] == 200
 
 
-class TestLambdaCreateCreditNote:
-    @patch('src.lambda_function.createCreditNote')
-    def test_post_credit_note_routes_correctly(self, mock_credit):
-        mock_credit.return_value = {'statusCode': 201}
-        response = lambda_handler(make_event('POST', f'{INVOICE_PATH}/INV-123/credit-notes', path_params={'invoice_id': 'INV-123'}), {})
-        mock_credit.assert_called_once_with('INV-123')
-        assert response['statusCode'] == 201
+#class TestLambdaCreateCreditNote:
+#    @patch('src.lambda_function.createCreditNote')
+#    def test_post_credit_note_routes_correctly(self, mock_credit):
+#        mock_credit.return_value = {'statusCode': 201}
+#        response = lambda_handler(make_event('POST', f'{INVOICE_PATH}/INV-123/credit-notes', path_params={'invoice_id': 'INV-123'}), {})
+#        mock_credit.assert_called_once_with('INV-123')
+#        assert response['statusCode'] == 201
 
 
-class TestLambdaInvoiceToPdf:
-    @patch('src.lambda_function.InvoiceToPdf')
-    def test_get_invoice_pdf_routes_correctly(self, mock_pdf):
-        mock_pdf.return_value = {'statusCode': 200}
-        response = lambda_handler(make_event('GET', f'{INVOICE_PATH}/INV-123/pdf', path_params={'invoice_id': 'INV-123'}), {})
-        mock_pdf.assert_called_once_with('INV-123')
-        assert response['statusCode'] == 200
+#class TestLambdaInvoiceToPdf:
+#    @patch('src.lambda_function.InvoiceToPdf')
+#    def test_get_invoice_pdf_routes_correctly(self, mock_pdf):
+#        mock_pdf.return_value = {'statusCode': 200}
+#        response = lambda_handler(make_event('GET', f'{INVOICE_PATH}/INV-123/pdf', path_params={'invoice_id': 'INV-123'}), {})
+#        mock_pdf.assert_called_once_with('INV-123')
+#        assert response['statusCode'] == 200

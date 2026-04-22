@@ -42,7 +42,6 @@ def createInvoice():
         return build_response(503, JSON_TYPE, e.response['Error']['Message'])
 
 
-
 def retrieveInvoiceById(invoice_id):
     try:
         response = requests.get(f"{INVOICE_URL}/v1/invoices/{invoice_id}", headers=HEADERS)

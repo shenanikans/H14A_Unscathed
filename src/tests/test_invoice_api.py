@@ -7,7 +7,7 @@ class Test:
         # create invoice
         createInvoiceResponse = createInvoice()
         assert createInvoiceResponse["statusCode"] == 201
-        invoice_id = json.loads(createInvoiceResponse['body'])['invoice']['invoice_id']
+        invoice_id = (createInvoiceResponse['body'])['invoice']['invoice_id']
         assert invoice_id is not None
 
         retrieveInvoiceResponse = retrieveInvoiceById(invoice_id)
@@ -17,7 +17,6 @@ class Test:
         assert updateInvoiceResponse["statusCode"] == 200
 
         updateInvoiceStatus = InvoiceStatus(invoice_id)
-        print(json.loads(updateInvoiceStatus['body']))
         assert updateInvoiceStatus["statusCode"] == 200
         
         createCreditNoteResponse = createCreditNote(invoice_id)
@@ -30,7 +29,7 @@ class Test:
 
         createInvoiceResponse = createInvoice()
         assert createInvoiceResponse["statusCode"] == 201
-        invoice_id = json.loads(createInvoiceResponse['body'])['invoice']['invoice_id']
+        invoice_id = (createInvoiceResponse['body'])['invoice']['invoice_id']
         assert invoice_id is not None
     
         deleteInvoiceResponse = deleteInvoiceById(invoice_id)
