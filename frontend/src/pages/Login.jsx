@@ -2,14 +2,16 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 
-
 export default function Login() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
+    const [error, setError] = useState('')
     const navigate = useNavigate()
+
     const handleSubmit = async (event) => {
         event.preventDefault()
+        setError('')
 
         const response = await fetch('/atlas/api/auth/login', {
             method: 'POST',
@@ -22,11 +24,17 @@ export default function Login() {
         if (response.status === 200) {
             localStorage.removeItem('token')
             localStorage.setItem('accessToken', data.accessToken)
-            navigate('/dashboard')
+            localStorage.setItem('role', data.role || 'buyer')
+            if (data.role === 'seller') {
+                navigate('/dashboard')
+            } else {
+                navigate('/buyer-dashboard')
+            }
         } else {
-            console.log('Invalid email or password')
+            setError('Invalid email or password')
         }
     }
+
     return (
         <div 
             className="min-h-screen flex items-center justify-center"
@@ -56,6 +64,7 @@ export default function Login() {
                             {showPassword ? 'Hide' : 'Show'}
                         </button>
                     </div>
+                    {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
                     <button type="submit" className="w-full bg-deep-sky-blue-600 text-white py-2 rounded-lg hover:bg-deep-sky-blue-700">Log In</button>
                 </form>
                 <p className="text-sm text-gray-500 mt-4 text-center">Don't have an account? <Link to="/register" className="text-deep-sky-blue-600 hover:underline">Sign up</Link></p>
