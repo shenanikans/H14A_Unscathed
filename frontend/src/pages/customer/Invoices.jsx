@@ -20,28 +20,26 @@ export default function CustomerInvoices() {
     return (
         <CustomerDashboardLayout>
             <div className="flex flex-col h-full">
-                <div className="flex justify-between items-center mb-4">
-                    <h1 className="text-2xl font-bold">My Invoices</h1>
-                </div>
+                <h1 className="text-2xl font-bold mb-4">My Invoices</h1>
                 <div className="flex gap-4 mb-4">
                     <input type="text" placeholder="Search invoices..." value={search} onChange={(e) => setSearch(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 w-64" />
                     <div className="flex gap-2">
                         {['All', 'Unpaid', 'Paid'].map((status) => (
-                            <button key={status} onClick={() => setFilter(status)} className={`px-4 py-2 rounded-md text-sm ${filter === status ? 'bg-deep-sky-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{status}</button>
+                            <button key={status} onClick={() => setFilter(status)} className={`px-4 py-2 rounded-md text-sm ${filter === status ? 'bg-deep-sky-blue-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>{status}</button>
                         ))}
                     </div>
                 </div>
-                <div className="rounded-xl shadow-sm border border-gray-200 overflow-hidden flex-1 overflow-y-auto">
+                <div className="rounded-xl shadow-sm border border-gray-300 overflow-hidden flex-1 overflow-y-auto">
                     <table className="w-full border-collapse">
-                        <thead className="sticky top-0 bg-gray-50">
-                            <tr className="text-left text-gray-500 text-sm">
-                                <th className="px-4 py-3 border-b border-gray-100">Invoice ID</th>
-                                <th className="px-4 py-3 border-b border-gray-100">Order ID</th>
-                                <th className="px-4 py-3 border-b border-gray-100">Issue Date</th>
-                                <th className="px-4 py-3 border-b border-gray-100">Due Date</th>
-                                <th className="px-4 py-3 border-b border-gray-100">Amount</th>
-                                <th className="px-4 py-3 border-b border-gray-100">Status</th>
-                                <th className="px-4 py-3 border-b border-gray-100"></th>
+                        <thead className="sticky top-0 bg-gray-200">
+                            <tr className="text-left text-gray-600 text-sm">
+                                <th className="px-4 py-3 border-b border-gray-300">Invoice ID</th>
+                                <th className="px-4 py-3 border-b border-gray-300">Order ID</th>
+                                <th className="px-4 py-3 border-b border-gray-300">Issue Date</th>
+                                <th className="px-4 py-3 border-b border-gray-300">Due Date</th>
+                                <th className="px-4 py-3 border-b border-gray-300">Amount</th>
+                                <th className="px-4 py-3 border-b border-gray-300">Status</th>
+                                <th className="px-4 py-3 border-b border-gray-300"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -49,7 +47,7 @@ export default function CustomerInvoices() {
                                 <tr><td colSpan="7" className="px-4 py-8 text-center text-gray-400">No invoices found.</td></tr>
                             ) : (
                                 filtered.map((inv, index) => (
-                                    <tr key={index} className="hover:bg-gray-50 border-b border-gray-100">
+                                    <tr key={index} className="hover:bg-gray-50 border-b border-gray-200">
                                         <td className="px-4 py-3 text-deep-sky-blue-600 text-sm">{inv.id}</td>
                                         <td className="px-4 py-3 text-sm">{inv.orderId}</td>
                                         <td className="px-4 py-3 text-gray-500 text-sm">{inv.date}</td>
