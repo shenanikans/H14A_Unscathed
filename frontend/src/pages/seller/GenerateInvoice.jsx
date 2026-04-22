@@ -3,23 +3,23 @@ import { useParams, useNavigate } from 'react-router-dom'
 import SellerDashboardLayout from '../../components/seller/SellerDashboardLayout'
 
 const STANDARDS = [
-    { code: 'AU', label: 'Australia', standard: 'PEPPOL BIS Billing 3.0', description: 'Required for Australian government invoicing, broadly used across industries' },
-    { code: 'NZ', label: 'New Zealand', standard: 'PEPPOL BIS Billing 3.0', description: 'NZ government e-invoicing mandate, same framework as Australia' },
+    { code: 'AU', label: 'Australia / New Zealand', standard: 'PEPPOL BIS Billing 3.0', description: 'Required for Australian and New Zealand government invoicing, broadly used across industries' },
     { code: 'SG', label: 'Singapore', standard: 'InvoiceNow (PEPPOL)', description: "InvoiceNow is Singapore's national e-invoicing network, built on PEPPOL" },
+    { code: 'JP', label: 'Japan', standard: 'JP PINT', description: 'Japan Procurement INTeroperability — mandatory for Japanese government procurement since 2023' },
     { code: 'EU', label: 'European Union', standard: 'EN 16931', description: 'EU directive 2014/55/EU requires this standard for public sector invoicing' },
     { code: 'US', label: 'United States', standard: 'UBL 2.1', description: 'No federal mandate yet, but UBL 2.1 is the most widely accepted format' },
 ]
 
 const TAX_SCHEME_BY_COUNTRY = {
-    AU: 'GST', NZ: 'GST', SG: 'GST', EU: 'VAT', US: 'Sales Tax'
+    AU: 'GST', SG: 'GST', JP: 'JCT', EU: 'VAT', US: 'Sales Tax'
 }
 
 const CURRENCY_BY_COUNTRY = {
-    AU: 'AUD', NZ: 'NZD', SG: 'SGD', EU: 'EUR', US: 'USD'
+    AU: 'AUD', SG: 'SGD', JP: 'JPY', EU: 'EUR', US: 'USD'
 }
 
 const DEFAULT_TAX_BY_COUNTRY = {
-    AU: '10', NZ: '10', SG: '9', EU: '20', US: '0'
+    AU: '10', SG: '9', JP: '10', EU: '20', US: '0'
 }
 
 export default function GenerateInvoice() {
