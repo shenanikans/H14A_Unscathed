@@ -206,9 +206,11 @@ def lambda_handler(event, context):
         elif http_method == 'POST' and path == '/api/validate/invoice':
             body = event.get('body') or ''
             response = validate_invoice(body)
-        
+
+
+                
         # Invoice Routes
-        if http_method == 'POST' and path == INVOICE_PATH:
+        elif http_method == 'POST' and path == INVOICE_PATH:
             response = createInvoice()
 
         elif http_method == 'GET' and path.startswith(INVOICE_PATH) and path_parameters:
@@ -252,6 +254,7 @@ def lambda_handler(event, context):
                 response = build_response(404, JSON_TYPE, "Not Found")
             else:
                 response = InvoiceToPdf(invoice_id)
+
 
 
         else:
