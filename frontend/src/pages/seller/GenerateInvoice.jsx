@@ -10,6 +10,18 @@ const STANDARDS = [
     { code: 'US', label: 'United States', standard: 'UBL 2.1', description: 'No federal mandate yet, but UBL 2.1 is the most widely accepted format' },
 ]
 
+const TAX_SCHEME_BY_COUNTRY = {
+    AU: 'GST', NZ: 'GST', SG: 'GST', EU: 'VAT', US: 'Sales Tax'
+}
+
+const CURRENCY_BY_COUNTRY = {
+    AU: 'AUD', NZ: 'NZD', SG: 'SGD', EU: 'EUR', US: 'USD'
+}
+
+const DEFAULT_TAX_BY_COUNTRY = {
+    AU: '10', NZ: '10', SG: '9', EU: '20', US: '0'
+}
+
 export default function GenerateInvoice() {
     const { id } = useParams()
     const navigate = useNavigate()
@@ -17,6 +29,19 @@ export default function GenerateInvoice() {
     const [selectedStandard, setSelectedStandard] = useState(null)
     const [formatted, setFormatted] = useState(null)
     const [loading, setLoading] = useState(true)
+
+    const year = new Date().getFullYear()
+    const seq = String(Math.floor(Math.random() * 900) + 100)
+    const [invoiceNumber, setInvoiceNumber] = useState(`INV-${year}-${seq}`)
+    const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0])
+    const [dueDate, setDueDate] = useState(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+    const [taxRate, setTaxRate] = useState('10')
+    const [paymentTerms, setPaymentTerms] = useState('Net 30')
+    const [bankAccount, setBankAccount] = useState('')
+    const [bsb, setBsb] = useState('')
+    const [note, setNote] = useState('')
+    const [unitPrice, setUnitPrice] = useState('')
+    const [currency, setCurrency] = useState('AUD')
 
     useEffect(() => {
         const fetchDespatch = async () => {
@@ -45,11 +70,25 @@ export default function GenerateInvoice() {
         fetchDespatch()
     }, [id])
 
+    useEffect(() => {
+        if (selectedStandard) {
+            setCurrency(CURRENCY_BY_COUNTRY[selectedStandard] || 'AUD')
+            setTaxRate(DEFAULT_TAX_BY_COUNTRY[selectedStandard] || '10')
+        }
+    }, [selectedStandard])
+
     const stepClass = (index) => {
         if (step > index + 1) return 'bg-green-500 text-white'
         if (step === index + 1) return 'bg-deep-sky-blue-600 text-white'
         return 'bg-gray-200 text-gray-500'
     }
+
+    const standard = STANDARDS.find(s => s.code === selectedStandard)
+    const taxScheme = TAX_SCHEME_BY_COUNTRY[selectedStandard] || 'GST'
+    const qty = parseFloat(formatted?.quantity) || 1
+    const subtotal = qty * (parseFloat(unitPrice) || 0)
+    const tax = subtotal * (parseFloat(taxRate) / 100)
+    const total = subtotal + tax
 
     return (
         <SellerDashboardLayout>
@@ -110,7 +149,24 @@ export default function GenerateInvoice() {
                     )}
 
                     {step === 2 && (
-                        <p className="text-gray-400">Invoice details coming soon...</p>
+                        <div className="max-w-3xl flex flex-col gap-6">
+                            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                                <h2 className="text-lg font-semibold mb-1">Despatch Summary</h2>
+                                <p className="text-xs text-gray-400 mb-4">Pre-filled from Despatch Advice {id}</p>
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                    <div><span className="text-gray-500">Order Reference:</span> <span className="font-medium">{formatted?.orderRef}</span></div>
+                                    <div><span className="text-gray-500">Supplier:</span> <span className="font-medium">{formatted?.supplier}</span></div>
+                                    <div><span className="text-gray-500">Customer:</span> <span className="font-medium">{formatted?.customer}</span></div>
+                                    <div><span className="text-gray-500">Quantity:</span> <span className="font-medium">{formatted?.quantity}</span></div>
+                                    <div><span className="text-gray-500">Standard:</span> <span className="font-medium text-deep-sky-blue-600">{standard?.standard}</span></div>
+                                    <div><span className="text-gray-500">Currency:</span> <span className="font-medium">{currency}</span></div>
+                                </div>
+                            </div>
+                            <p className="text-gray-400 text-sm">Invoice fields coming next...</p>
+                            <div className="flex justify-between">
+                                <button onClick={() => setStep(1)} className="border border-gray-300 text-gray-600 px-6 py-2 rounded-lg hover:bg-gray-50">← Back</button>
+                            </div>
+                        </div>
                     )}
 
                     {step === 3 && (
