@@ -9,9 +9,17 @@ export default function Register() {
     const [confirmPassword, setConfirmPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-    const [role, setRole] = useState('buyer')
+    const [roles, setRoles] = useState(['customer'])
     const [error, setError] = useState('')
     const navigate = useNavigate()
+
+    const toggleRole = (role) => {
+        setRoles(prev => 
+            prev.includes(role) 
+                ? prev.length > 1 ? prev.filter(r => r !== role) : prev
+                : [...prev, role]
+        )
+    }
 
     const handleSubmit = async (event) => {
         event.preventDefault()
@@ -25,7 +33,7 @@ export default function Register() {
         const response = await fetch('/atlas/api/auth/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, password, role })
+            body: JSON.stringify({ name, email, password, roles })
         })
 
         const data = await response.json()
@@ -99,16 +107,30 @@ export default function Register() {
                         </button>
                     </div>
 
-                    <div className="flex items-center gap-3 mb-4">
-                        <input
-                            type="checkbox"
-                            id="seller"
-                            checked={role === 'seller'}
-                            onChange={(e) => setRole(e.target.checked ? 'seller' : 'buyer')}
-                            className="w-4 h-4"
-                        />
-                        <label htmlFor="seller" className="text-sm text-gray-600">Register as a Seller</label>
+                    <div className="flex items-center justify-between mb-4">
+                        <span className="text-sm text-gray-600">Please select your account type:</span>
+                        <div className="flex items-center gap-6">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={roles.includes('customer')}
+                                    onChange={() => toggleRole('customer')}
+                                    className="w-4 h-4"
+                                />
+                                <span className="text-sm text-gray-600">Customer</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={roles.includes('seller')}
+                                    onChange={() => toggleRole('seller')}
+                                    className="w-4 h-4"
+                                />
+                                <span className="text-sm text-gray-600">Seller</span>
+                            </label>
+                        </div>
                     </div>
+                    <div className="mb-4"></div>
 
                     {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 

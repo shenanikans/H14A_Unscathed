@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import DashboardLayout from '../components/DashboardLayout'
+import DashboardLayout from '../../components/seller/SellerDashboardLayout'
 import { useNavigate } from 'react-router-dom'
+import SellerDashboardLayout from '../../components/seller/SellerDashboardLayout'
 
 export default function CreateDespatch() {
     const navigate = useNavigate()

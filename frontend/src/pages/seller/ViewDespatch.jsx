@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import DashboardLayout from '../components/DashboardLayout'
+import SellerDashboardLayout  from '../../components/seller/SellerDashboardLayout'
 
 export default function ViewDespatch() {
     const { id } = useParams()
@@ -102,7 +102,7 @@ export default function ViewDespatch() {
     }
 
     return (
-        <DashboardLayout>
+        <SellerDashboardLayout >
             <h1 className="text-2xl font-bold mb-6">Despatch Advice {id}</h1>
 
             {success && (
@@ -183,6 +183,6 @@ export default function ViewDespatch() {
                     )}
                 </div>
             </div>
-        </DashboardLayout>
+        </SellerDashboardLayout>
     )
 }

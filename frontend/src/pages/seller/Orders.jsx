@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import DashboardLayout from '../components/DashboardLayout'
+import SellerDashboardLayout from '../../components/seller/SellerDashboardLayout'
 
 const fakeOrders = [
     { id: 'PO-2026-001', name: 'Purchase Order A', date: '2026-04-01', status: 'Pending', total: '$1,200.00' },
@@ -19,52 +19,36 @@ export default function Orders() {
         .filter(order => order.name.toLowerCase().includes(search.toLowerCase()) || order.id.toLowerCase().includes(search.toLowerCase()))
 
     return (
-        <DashboardLayout>
+        <SellerDashboardLayout>
             <div className="flex flex-col h-full">
                 <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-bold">Orders</h1>
                     <Link to="/create-order">
-                        <button className="bg-deep-sky-blue-600 text-white px-4 py-2 rounded-lg hover:bg-deep-sky-blue-700">
-                            + Create Order
-                        </button>
+                        <button className="bg-deep-sky-blue-600 text-white px-4 py-2 rounded-lg hover:bg-deep-sky-blue-700">+ Create Order</button>
                     </Link>
                 </div>
-
                 <div className="flex gap-4 mb-4">
-                    <input
-                        type="text"
-                        placeholder="Search orders..."
-                        value={search}
-                        onChange={(event) => setSearch(event.target.value)}
-                        className="border border-gray-300 rounded-lg px-4 py-2 w-64"
-                    />
+                    <input type="text" placeholder="Search orders..." value={search} onChange={(e) => setSearch(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 w-64" />
                     <div className="flex gap-2">
                         {['All', 'Pending', 'Processing', 'Delivered'].map((status) => (
-                            <button
-                                key={status}
-                                onClick={() => setFilter(status)}
-                                className={`px-4 py-2 rounded-md text-sm ${filter === status ? 'bg-deep-sky-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                            >
-                                {status}
-                            </button>
+                            <button key={status} onClick={() => setFilter(status)} className={`px-4 py-2 rounded-md text-sm ${filter === status ? 'bg-deep-sky-blue-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>{status}</button>
                         ))}
                     </div>
                 </div>
-
-                <div className="rounded-xl shadow-sm border border-gray-200 overflow-hidden flex-1 overflow-y-auto">
+                <div className="rounded-xl shadow-sm border border-gray-300 overflow-hidden flex-1 overflow-y-auto">
                     <table className="w-full border-collapse">
-                        <thead className="sticky top-0 bg-gray-50">
-                            <tr className="text-left text-gray-500 text-sm">
-                                <th className="px-4 py-3 border-b border-gray-100">Order ID</th>
-                                <th className="px-4 py-3 border-b border-gray-100">Name</th>
-                                <th className="px-4 py-3 border-b border-gray-100">Date</th>
-                                <th className="px-4 py-3 border-b border-gray-100">Status</th>
-                                <th className="px-4 py-3 border-b border-gray-100">Total</th>
+                        <thead className="sticky top-0 bg-gray-200">
+                            <tr className="text-left text-gray-600 text-sm">
+                                <th className="px-4 py-3 border-b border-gray-300">Order ID</th>
+                                <th className="px-4 py-3 border-b border-gray-300">Name</th>
+                                <th className="px-4 py-3 border-b border-gray-300">Date</th>
+                                <th className="px-4 py-3 border-b border-gray-300">Status</th>
+                                <th className="px-4 py-3 border-b border-gray-300">Total</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredOrders.map((order, index) => (
-                                <tr key={index} className="hover:bg-gray-50 border-b border-gray-100">
+                                <tr key={index} className="hover:bg-gray-50 border-b border-gray-200">
                                     <td className="px-4 py-3 text-deep-sky-blue-600">{order.id}</td>
                                     <td className="px-4 py-3">{order.name}</td>
                                     <td className="px-4 py-3 text-gray-500">{order.date}</td>
@@ -74,9 +58,7 @@ export default function Orders() {
                                             order.status === 'Delivered' ? 'bg-green-100 text-green-700' :
                                             order.status === 'Processing' ? 'bg-blue-100 text-blue-700' :
                                             'bg-gray-100 text-gray-600'
-                                        }`}>
-                                            {order.status}
-                                        </span>
+                                        }`}>{order.status}</span>
                                     </td>
                                     <td className="px-4 py-3">{order.total}</td>
                                 </tr>
@@ -85,6 +67,6 @@ export default function Orders() {
                     </table>
                 </div>
             </div>
-        </DashboardLayout>
+        </SellerDashboardLayout>
     )
 }

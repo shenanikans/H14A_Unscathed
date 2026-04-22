@@ -1,20 +1,23 @@
 import {BrowserRouter, Routes, Route } from 'react-router-dom'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import Landing from './pages/Landing'
-import Privacy from './pages/Privacy'
-import Terms from './pages/Terms'
-import Dashboard from './pages/Dashboard'
-import Orders from './pages/Orders'
-import CreateOrder from './pages/CreateOrder'
-import Despatch from './pages/Despatch'
-import ViewDespatch from './pages/ViewDespatch'
-import Invoices from './pages/Invoices'
-import Settings from './pages/Settings'
-import Profile from './pages/Profile'
-import CreateDespatch from './pages/CreateDespatch'
+import Login from './pages/auth/Login'
+import Register from './pages/auth/Register'
+import Landing from './pages/public/Landing'
+import Privacy from './pages/public/Privacy'
+import Terms from './pages/public/Terms'
+import SellerDashboard from './pages/seller/Dashboard'
+import CustomerDashboard from './pages/customer/Dashboard'
+import CustomerOrders from './pages/customer/Orders'
+import CustomerCreateOrder from './pages/customer/CreateOrder'
+import Orders from './pages/seller/Orders'
+import CreateOrder from './pages/seller/CreateOrder'
+import Despatch from './pages/seller/Despatch'
+import ViewDespatch from './pages/seller/ViewDespatch'
+import Invoices from './pages/seller/Invoices'
+import Settings from './pages/seller/Settings'
+import Profile from './pages/seller/Profile'
+import CreateDespatch from './pages/seller/CreateDespatch'
 
-export  default function App() {
+export default function App() {
   return (
     <BrowserRouter>
       <Routes>
@@ -23,7 +26,9 @@ export  default function App() {
         <Route path="/register" element={<Register/>} />
         <Route path="/privacy-policy" element={<Privacy/>} />
         <Route path="/terms" element={<Terms/>} />
-        <Route path="/dashboard" element={<Dashboard/>} />
+
+        {/* Seller routes */}
+        <Route path="/dashboard" element={<SellerDashboard/>} />
         <Route path="/orders" element={<Orders/>} />
         <Route path="/create-order" element={<CreateOrder/>} />
         <Route path="/despatch" element={<Despatch/>} />
@@ -32,6 +37,11 @@ export  default function App() {
         <Route path="/settings" element={<Settings/>} />
         <Route path="/profile" element={<Profile/>} />
         <Route path="/create-despatch" element={<CreateDespatch/>} />
+
+        {/* Customer routes */}
+        <Route path="/customer-dashboard" element={<CustomerDashboard/>} />
+        <Route path="/customer-orders" element={<CustomerOrders/>} />
+        <Route path="/customer-create-order" element={<CustomerCreateOrder/>} />
       </Routes>
     </BrowserRouter>
   )

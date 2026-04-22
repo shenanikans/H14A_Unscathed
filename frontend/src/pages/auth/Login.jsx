@@ -24,11 +24,14 @@ export default function Login() {
         if (response.status === 200) {
             localStorage.removeItem('token')
             localStorage.setItem('accessToken', data.accessToken)
-            localStorage.setItem('role', data.role || 'buyer')
-            if (data.role === 'seller') {
+            const roles = data.roles || ['customer']
+            localStorage.setItem('roles', JSON.stringify(roles))
+            const activeRole = roles.includes('seller') ? 'seller' : 'customer'
+            localStorage.setItem('activeRole', activeRole)
+            if (activeRole === 'seller') {
                 navigate('/dashboard')
             } else {
-                navigate('/buyer-dashboard')
+                navigate('/customer-dashboard')
             }
         } else {
             setError('Invalid email or password')
