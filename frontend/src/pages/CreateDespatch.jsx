@@ -1,13 +1,16 @@
 import { useState, useEffect, useRef } from 'react'
 import DashboardLayout from '../components/DashboardLayout'
+import { useNavigate } from 'react-router-dom'
 
 export default function CreateDespatch() {
-    const [docId, setDocId] = useState(crypto.randomUUID())
+    const navigate = useNavigate()
+
+    const [docId, setDocId] = useState('')
     const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0])
     const [issueTime, setIssueTime] = useState(new Date().toTimeString().split(' ')[0])
     const [docNote, setDocNote] = useState('')
     const [orderRefId, setOrderRefId] = useState('')
-    const [supplierPartyName, setSupplierPartyName] = useState('')
+    const [supplierPartyName, setSupplierPartyName] = useState('Atlas')
     const [supplierEndpointId, setSupplierEndpointId] = useState('')
     const [supplierSchemeId, setSupplierSchemeId] = useState('')
     const [customerPartyName, setCustomerPartyName] = useState('')
@@ -16,8 +19,8 @@ export default function CreateDespatch() {
     const [streetName, setStreetName] = useState('')
     const [cityName, setCityName] = useState('')
     const [postalZone, setPostalZone] = useState('')
+    const [state, setState] = useState('')
     const [country, setCountry] = useState('')
-    const [countryCode, setCountryCode] = useState('')
     const [mode, setMode] = useState(null)
     const [file, setFile] = useState(null)
     const [hoverSelect, setHoverSelect] = useState(false)
@@ -31,6 +34,17 @@ export default function CreateDespatch() {
             setMode(null)
             setHoverUpload(false)
         }
+        if (mode === 'manual') {
+            const fetchNextId = async () => {
+                const token = localStorage.getItem('accessToken')
+                const response = await fetch('/atlas/api/despatch/next-id', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                const data = await response.json()
+                setDocId(data.nextId)
+            }
+            fetchNextId()
+        }
     }, [mode])
 
     const handleSubmit = async () => {
@@ -40,58 +54,25 @@ export default function CreateDespatch() {
         let body
 
         if (file) {
-            const xmlText = await file.text()
-            body = JSON.stringify({ xml: xmlText })
+            body = await file.text()
         } else if (mode === 'manual') {
-            body = JSON.stringify({
-                xml: {
-                    xmlns: 'urn:oasis:names:specification:ubl:schema:xsd:Order-2',
-                    ID: docId,
-                    IssueDate: issueDate,
-                    IssueTime: issueTime,
-                    Note: docNote,
-                    orderReference: { id: orderRefId },
-                    despatchSupplierParty: {
-                        party: {
-                            endpointId: { value: supplierEndpointId, schemeId: supplierSchemeId },
-                            partyName: { name: supplierPartyName }
-                        }
-                    },
-                    deliveryCustomerParty: {
-                        party: {
-                            endpointId: { value: customerEndpointId, schemeId: customerSchemeId },
-                            partyName: { name: customerPartyName }
-                        }
-                    },
-                    shipment: {
-                        id: '1',
-                        delivery: {
-                            deliveryAddress: {
-                                streetName,
-                                cityName,
-                                postalZone,
-                                countrySubentity: country,
-                                country: { identificationCode: countryCode }
-                            }
-                        }
-                    }
-                }
-            })
+            body = `<?xml version="1.0" encoding="UTF-8"?><Order xmlns="urn:oasis:names:specification:ubl:schema:xsd:Order-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"><cbc:ID>${orderRefId}</cbc:ID><cbc:IssueDate>${issueDate}</cbc:IssueDate><cac:OrderReference><cbc:ID>${orderRefId}</cbc:ID><cbc:IssueDate>${issueDate}</cbc:IssueDate></cac:OrderReference><cac:SellerSupplierParty><cac:Party><cac:PartyName><cbc:Name>${supplierPartyName}</cbc:Name></cac:PartyName></cac:Party></cac:SellerSupplierParty><cac:BuyerCustomerParty><cac:Party><cac:PartyName><cbc:Name>${customerPartyName}</cbc:Name></cac:PartyName><cac:PostalAddress><cbc:StreetName>${streetName}</cbc:StreetName><cbc:CityName>${cityName}</cbc:CityName><cbc:PostalZone>${postalZone}</cbc:PostalZone><cbc:CountrySubentity>${state}</cbc:CountrySubentity><cac:Country><cbc:IdentificationCode>${country}</cbc:IdentificationCode></cac:Country></cac:PostalAddress></cac:Party></cac:BuyerCustomerParty></Order>`
         }
 
         const response = await fetch('/atlas/api/despatch/despatch-advice', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/xml',
                 'Authorization': `Bearer ${token}`
             },
             body
         })
 
+        const data = await response.text()
         if (response.ok) {
-            console.log('Despatch created successfully')
+            navigate('/despatch')
         } else {
-            console.log('Error creating despatch')
+            console.log('Error:', data)
         }
     }
 
@@ -149,7 +130,7 @@ export default function CreateDespatch() {
                             <div>
                                 <h3 className="text-sm font-semibold text-gray-600 mb-3">Document Details</h3>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <input type="text" placeholder="ID" value={docId} onChange={(e) => setDocId(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 text-sm" />
+                                    <input type="text" value={docId || 'Loading...'} readOnly className="border border-gray-300 rounded-lg px-4 py-2 text-sm" />
                                     <input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 text-sm" />
                                     <input type="time" value={issueTime} onChange={(e) => setIssueTime(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 text-sm" />
                                     <input type="text" placeholder="Note" value={docNote} onChange={(e) => setDocNote(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 text-sm" />
@@ -159,15 +140,6 @@ export default function CreateDespatch() {
                             <div>
                                 <h3 className="text-sm font-semibold text-gray-600 mb-3">Order Reference</h3>
                                 <input type="text" placeholder="Order Reference ID" value={orderRefId} onChange={(e) => setOrderRefId(e.target.value)} className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm" />
-                            </div>
-
-                            <div>
-                                <h3 className="text-sm font-semibold text-gray-600 mb-3">Supplier</h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <input type="text" placeholder="Party Name" value={supplierPartyName} onChange={(e) => setSupplierPartyName(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 text-sm" />
-                                    <input type="text" placeholder="Endpoint ID" value={supplierEndpointId} onChange={(e) => setSupplierEndpointId(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 text-sm" />
-                                    <input type="text" placeholder="Scheme ID" value={supplierSchemeId} onChange={(e) => setSupplierSchemeId(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 text-sm" />
-                                </div>
                             </div>
 
                             <div>
@@ -185,8 +157,21 @@ export default function CreateDespatch() {
                                     <input type="text" placeholder="Street Name" value={streetName} onChange={(e) => setStreetName(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 text-sm" />
                                     <input type="text" placeholder="City" value={cityName} onChange={(e) => setCityName(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 text-sm" />
                                     <input type="text" placeholder="Postal Zone" value={postalZone} onChange={(e) => setPostalZone(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 text-sm" />
-                                    <input type="text" placeholder="Country" value={country} onChange={(e) => setCountry(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 text-sm" />
-                                    <input type="text" placeholder="Country Code (e.g. AU)" value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 text-sm" />
+                                    <input type="text" placeholder="State" value={state} onChange={(e) => setState(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 text-sm" />
+                                    <select value={country} onChange={(e) => setCountry(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-600">
+                                        <option value="">Select Country</option>
+                                        <option value="AU">Australia</option>
+                                        <option value="NZ">New Zealand</option>
+                                        <option value="US">United States</option>
+                                        <option value="GB">United Kingdom</option>
+                                        <option value="CA">Canada</option>
+                                        <option value="SG">Singapore</option>
+                                        <option value="JP">Japan</option>
+                                        <option value="CN">China</option>
+                                        <option value="IN">India</option>
+                                        <option value="DE">Germany</option>
+                                        <option value="FR">France</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -198,6 +183,17 @@ export default function CreateDespatch() {
                         </div>
                     )}
                 </div>
+
+                {mode === 'manual' && (
+                    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                        <h2 className="text-lg font-semibold mb-4">Supplier Details</h2>
+                        <div className="grid grid-cols-2 gap-4">
+                            <input type="text" placeholder="Party Name" value={supplierPartyName} onChange={(e) => setSupplierPartyName(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 text-sm" />
+                            <input type="text" placeholder="Endpoint ID" value={supplierEndpointId} onChange={(e) => setSupplierEndpointId(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 text-sm" />
+                            <input type="text" placeholder="Scheme ID" value={supplierSchemeId} onChange={(e) => setSupplierSchemeId(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2 text-sm" />
+                        </div>
+                    </div>
+                )}
 
                 <div className="flex justify-end">
                     <button
