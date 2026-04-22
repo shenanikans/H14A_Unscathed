@@ -248,3 +248,16 @@ class TestLambdaValidateDespatch:
         )
         mock_despatch_validate.assert_called_once()
         assert response['statusCode'] == 200
+
+class TestLambdaValidateInvoice:
+    @patch('src.lambda_function.validate_invoice')
+    def test_validate_invoice_is_called(self, mock_invoice_validate):
+        mock_invoice_validate.return_value = { 'statusCode': 200 }
+
+        path = '/api/validate/invoice'
+        response = lambda_handler(
+            make_event('POST', path, path_params={}, body=valid_invoice_str),
+            {}
+        )
+        mock_invoice_validate.assert_called_once()
+        assert response['statusCode'] == 200

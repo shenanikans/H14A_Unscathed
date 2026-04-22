@@ -14,7 +14,7 @@ from src.auth_service import register, login, logout
 from src.auth_dependencies import get_auth_context
 from src.shopping_cart import addItemToShoppingCart, removeItemFromShoppingCart, updateItemInShoppingCart, retrieveShoppingCart, clearShoppingCart
 from src.order_api_handling import createOrder, retrieveOrderById, updateOrder, deleteOrder
-from src.validate_ubl import validate_order, validate_despatch
+from src.validate_ubl import validate_order, validate_despatch, validate_invoice
 
 # Initialise URL constants
 BASE_URL = '/api/despatch'
@@ -200,6 +200,9 @@ def lambda_handler(event, context):
         elif http_method == 'POST' and path == '/api/validate/despatch':
             body = event.get('body') or ''
             response = validate_despatch(body)
+        elif http_method == 'POST' and path == '/api/validate/invoice':
+            body = event.get('body') or ''
+            response = validate_invoice(body)
 
         else:
             response = build_response(404, JSON_TYPE, 'Not Found')

@@ -1,8 +1,5 @@
-# Import python modules needed for testing
-import xml.etree.ElementTree as ET
-
-# Import function to test
-from src.validate_ubl import validate_order, validate_despatch
+# Import functions to test
+from src.validate_ubl import validate_order, validate_despatch, validate_invoice
 
 valid_order_str = """<?xml version="1.0" encoding="UTF-8"?>
 <Order xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns="urn:oasis:names:specification:ubl:schema:xsd:Order-2">
@@ -342,6 +339,8 @@ valid_despatch_str = """<?xml version="1.0" encoding="UTF-8"?>
 	</cac:DespatchLine>
 </DespatchAdvice>"""
 
+valid_invoice_str = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Invoice xmlns=\"urn:oasis:names:specification:ubl:schema:xsd:Invoice-2\"\n\txmlns:cac=\"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2\"\n\txmlns:cbc=\"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2\">\n  <cbc:ID>123</cbc:ID>\n  <cbc:IssueDate>2011-09-22</cbc:IssueDate>\n  <cac:InvoicePeriod>\n    <cbc:StartDate>2011-08-01</cbc:StartDate>\n    <cbc:EndDate>2011-08-31</cbc:EndDate>\n  </cac:InvoicePeriod>\n  <cac:AccountingSupplierParty>\n    <cac:Party>\n      <cac:PartyName>\n        <cbc:Name>Custom Cotter Pins</cbc:Name>\n      </cac:PartyName>\n    </cac:Party>\n  </cac:AccountingSupplierParty>\n  <cac:AccountingCustomerParty>\n    <cac:Party>\n      <cac:PartyName>\n        <cbc:Name>North American Veeblefetzer</cbc:Name>\n      </cac:PartyName>\n    </cac:Party>\n  </cac:AccountingCustomerParty>\n  <cac:LegalMonetaryTotal>\n     <cbc:PayableAmount currencyID=\"CAD\">100.00</cbc:PayableAmount>\n  </cac:LegalMonetaryTotal>\n  <cac:InvoiceLine>\n    <cbc:ID>1</cbc:ID>\n    <cbc:LineExtensionAmount currencyID=\"CAD\">100.00</cbc:LineExtensionAmount>\n    <cac:Item>\n       <cbc:Description>Cotter pin, MIL-SPEC</cbc:Description>\n    </cac:Item>\n  </cac:InvoiceLine>\n</Invoice>"
+
 invalid_xml = "this is not an xml"
 
 class TestValidateOrder:
@@ -359,11 +358,23 @@ class TestValidateOrder:
 class TestValidateDespatch:
 
     # Test that despatch documents are validated properly
-    def test_valid_order_xml(self):
+    def test_valid_despatch_xml(self):
         response = validate_despatch(valid_despatch_str)
         assert response["statusCode"] == 200
 
-    def test_invalid_order_xml(self):
+    def test_invalid_despatch_xml(self):
         response = validate_despatch(invalid_xml)
+        assert response["statusCode"] == 200
+        assert response["body"]["valid"] == False
+
+class TestValidateInvoice:
+
+    # Test that invoice documents are validated properly
+    def test_valid_invoice_xml(self):
+        response = validate_invoice(valid_invoice_str)
+        assert response["statusCode"] == 200
+
+    def test_invalid_invoice_xml(self):
+        response = validate_invoice(invalid_xml)
         assert response["statusCode"] == 200
         assert response["body"]["valid"] == False
