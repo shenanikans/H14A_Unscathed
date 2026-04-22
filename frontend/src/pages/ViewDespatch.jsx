@@ -11,7 +11,10 @@ export default function ViewDespatch() {
     const [deliveredQuantity, setDeliveredQuantity] = useState('')
     const [backorderQuantity, setBackorderQuantity] = useState('')
     const [backorderReason, setBackorderReason] = useState('')
+    const [backorderReasonOther, setBackorderReasonOther] = useState('')
     const [note, setNote] = useState('')
+    const [success, setSuccess] = useState(false)
+    const [error, setError] = useState('')
 
     const formatXml = (xml) => {
         let formatted = ''
@@ -54,9 +57,67 @@ export default function ViewDespatch() {
         fetchDespatch()
     }, [id])
 
+    const handleUpdate = async () => {
+        if (!deliveredQuantity) {
+            setError('Please complete all fields')
+            return
+        }
+        if (!backorderQuantity) {
+            setError('Please complete all fields')
+            return
+        }
+        if (!backorderReason) {
+            setError('Please complete all fields')
+            return
+        }
+        if (backorderReason === 'Other' && !backorderReasonOther) {
+            setError('Please complete all fields')
+            return
+        }
+
+        const token = localStorage.getItem('accessToken')
+        const response = await fetch(`/atlas/api/despatch/despatch-advice/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                deliveredQuantity: deliveredQuantity ? Number(deliveredQuantity) : undefined,
+                backorderQuantity: backorderQuantity ? Number(backorderQuantity) : undefined,
+                backorderReason: backorderReason === 'Other' ? backorderReasonOther : backorderReason || undefined,
+                note: note || undefined
+            })
+        })
+
+        if (response.ok) {
+            const updatedXml = await response.text()
+            setDespatch(updatedXml)
+            setSuccess(true)
+            setError('')
+        } else {
+            setError('Failed to update despatch advice. Please try again.')
+            setSuccess(false)
+        }
+    }
+
     return (
         <DashboardLayout>
             <h1 className="text-2xl font-bold mb-6">Despatch Advice {id}</h1>
+
+            {success && (
+                <div className="flex justify-between items-center bg-green-100 text-green-700 px-4 py-3 rounded-lg mb-4">
+                    <span>Despatch advice updated successfully!</span>
+                    <button onClick={() => setSuccess(false)} className="text-green-700 hover:text-green-900 font-bold text-lg leading-none">✕</button>
+                </div>
+            )}
+
+            {error && (
+                <div className="flex justify-between items-center bg-red-100 text-red-700 px-4 py-3 rounded-lg mb-4">
+                    <span>{error}</span>
+                    <button onClick={() => setError('')} className="text-red-700 hover:text-red-900 font-bold text-lg leading-none">✕</button>
+                </div>
+            )}
             
             <div className="flex flex-col gap-6">
                 <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
@@ -64,11 +125,32 @@ export default function ViewDespatch() {
                     <div className="grid grid-cols-2 gap-4">
                         <input type="number" placeholder="Delivered Quantity" value={deliveredQuantity} onChange={(e) => setDeliveredQuantity(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2" />
                         <input type="number" placeholder="Backorder Quantity" value={backorderQuantity} onChange={(e) => setBackorderQuantity(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2" />
-                        <input type="text" placeholder="Backorder Reason" value={backorderReason} onChange={(e) => setBackorderReason(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2" />
+                        <select
+                            value={backorderReason}
+                            onChange={(e) => setBackorderReason(e.target.value)}
+                            className="border border-gray-300 rounded-lg px-4 py-2 text-sm"
+                        >
+                            <option value="">Select Backorder Reason</option>
+                            <option value="Out of stock">Out of stock</option>
+                            <option value="Damaged in transit">Damaged in transit</option>
+                            <option value="Supplier delay">Supplier delay</option>
+                            <option value="Incorrect item ordered">Incorrect item ordered</option>
+                            <option value="Weather delay">Weather delay</option>
+                            <option value="Other">Other</option>
+                        </select>
                         <input type="text" placeholder="Note" value={note} onChange={(e) => setNote(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2" />
                     </div>
+                    {backorderReason === 'Other' && (
+                        <input
+                            type="text"
+                            placeholder="Please specify..."
+                            value={backorderReasonOther}
+                            onChange={(e) => setBackorderReasonOther(e.target.value)}
+                            className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm mt-2"
+                        />
+                    )}
                     <div className="flex justify-end mt-4">
-                        <button className="bg-deep-sky-blue-600 text-white px-6 py-2 rounded-lg hover:bg-deep-sky-blue-700">Update</button>
+                        <button onClick={handleUpdate} className="bg-deep-sky-blue-600 text-white px-6 py-2 rounded-lg hover:bg-deep-sky-blue-700">Update</button>
                     </div>
                 </div>
 
