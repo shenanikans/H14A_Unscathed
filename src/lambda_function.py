@@ -4,7 +4,6 @@ from botocore.exceptions import ClientError
 
 # Import functions and constants that perform the core data processing
 from src.helper_functions import build_response
-from src.constants import JSON_TYPE, ORDER_URL, INVOICE_URL
 from src.constants import JSON_TYPE, XML_TYPE, ORDER_URL
 from src.delete_despatch import delete_despatch
 from src.retrieve_despatch import retrieve_despatch
@@ -207,10 +206,7 @@ def lambda_handler(event, context):
         elif http_method == 'POST' and path == '/api/validate/invoice':
             body = event.get('body') or ''
             response = validate_invoice(body)
-
-        else:
-            response = build_response(404, JSON_TYPE, 'Not Found')
-
+        
         # Invoice Routes
         if http_method == 'POST' and path == INVOICE_PATH:
             response = createInvoice()
@@ -256,6 +252,10 @@ def lambda_handler(event, context):
                 response = build_response(404, JSON_TYPE, "Not Found")
             else:
                 response = InvoiceToPdf(invoice_id)
+
+
+        else:
+            response = build_response(404, JSON_TYPE, 'Not Found')
 
     # Handle any errors raised accordingly
     except Exception as e:
