@@ -1,14 +1,8 @@
-import boto3
 import os
-
-_REGION = os.environ.get("AWS_REGION") or "us-east-1"
-dynamodb = boto3.resource("dynamodb", region_name=_REGION)
-
-DESPATCH_TABLE_NAME = os.environ.get("DESPATCH_TABLE_NAME", "despatch_id_email")
-table = dynamodb.Table(DESPATCH_TABLE_NAME)
+from datetime import datetime
 
 def get_next_despatch_id() -> str:
-    from datetime import datetime
+    import src.db
     
     now = datetime.utcnow()
     year = str(now.year)[2:]
@@ -16,7 +10,7 @@ def get_next_despatch_id() -> str:
     day = str(now.day).zfill(2)
     date_part = f"{year}{month}{day}"
     
-    response = table.update_item(
+    response = src.db.dynamodb_table.update_item(
         Key={"email_address": "SYSTEM", "despatch_id": f"counter_{date_part}"},
         UpdateExpression="SET #count = if_not_exists(#count, :zero) + :one",
         ExpressionAttributeNames={"#count": "count"},
