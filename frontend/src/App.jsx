@@ -16,6 +16,9 @@ import Invoices from './pages/seller/Invoices'
 import Settings from './pages/seller/Settings'
 import Profile from './pages/seller/Profile'
 import CreateDespatch from './pages/seller/CreateDespatch'
+import CustomerDespatch from './pages/customer/Despatch'
+import CustomerInvoices from './pages/customer/Invoices'
+import GenerateInvoice from './pages/seller/GenerateInvoice'
 
 export default function App() {
   return (
@@ -37,11 +40,14 @@ export default function App() {
         <Route path="/settings" element={<Settings/>} />
         <Route path="/profile" element={<Profile/>} />
         <Route path="/create-despatch" element={<CreateDespatch/>} />
+        <Route path="/generate-invoice/:id" element={<GenerateInvoice />} />
 
         {/* Customer routes */}
         <Route path="/customer-dashboard" element={<CustomerDashboard/>} />
         <Route path="/customer-orders" element={<CustomerOrders/>} />
         <Route path="/customer-create-order" element={<CustomerCreateOrder/>} />
+        <Route path="/customer-despatch" element={<CustomerDespatch />} />
+        <Route path="/customer-invoices" element={<CustomerInvoices />} />
       </Routes>
     </BrowserRouter>
   )
