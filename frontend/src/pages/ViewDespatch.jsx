@@ -1,27 +1,58 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout'
 
 export default function ViewDespatch() {
     const { id } = useParams()
+    const [despatch, setDespatch] = useState(null)
+    const [formatted, setFormatted] = useState(null)
+    const [loading, setLoading] = useState(true)
+    const [showFormatted, setShowFormatted] = useState(false)
     const [deliveredQuantity, setDeliveredQuantity] = useState('')
     const [backorderQuantity, setBackorderQuantity] = useState('')
     const [backorderReason, setBackorderReason] = useState('')
-    const [note, setNote] = useState('')    
-    const [showFormatted, setShowFormatted] = useState(false)
-    const mockDespatch = `<?xml version="1.0" encoding="UTF-8"?>
-<DespatchAdvice xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns="urn:oasis:names:specification:ubl:schema:xsd:DespatchAdvice-2">
-    <cbc:UBLVersionID>2.0</cbc:UBLVersionID>
-    <cbc:ID>${id}</cbc:ID>
-    <cbc:IssueDate>2026-04-21</cbc:IssueDate>
-    <cbc:DocumentStatusCode>NoStatus</cbc:DocumentStatusCode>
-    <cbc:DespatchAdviceTypeCode>delivery</cbc:DespatchAdviceTypeCode>
-    <cac:OrderReference>
-        <cbc:ID>PO-2026-001</cbc:ID>
-        <cbc:SalesOrderID>CON0095678</cbc:SalesOrderID>
-        <cbc:IssueDate>2026-04-01</cbc:IssueDate>
-    </cac:OrderReference>
-</DespatchAdvice>`
+    const [note, setNote] = useState('')
+
+    const formatXml = (xml) => {
+        let formatted = ''
+        let indent = ''
+        xml.split(/>\s*</).forEach(node => {
+            if (node.match(/^\/\w/)) indent = indent.substring(2)
+            formatted += indent + '<' + node + '>\r\n'
+            if (node.match(/^<?\w[^>]*[^\/]$/)) indent += '  '
+        })
+        return formatted.substring(1, formatted.length - 3)
+    }
+
+    useEffect(() => {
+        const fetchDespatch = async () => {
+            const token = localStorage.getItem('accessToken')
+            const response = await fetch(`/atlas/api/despatch/despatch-advice/${id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            const data = await response.text()
+            setDespatch(data)
+
+            const parser = new DOMParser()
+            const doc = parser.parseFromString(data, 'application/xml')
+            const get = (tag) => doc.getElementsByTagName(tag)[0]?.textContent || ''
+
+            setFormatted({
+                id: get('ns1:ID'),
+                issueDate: get('ns1:IssueDate'),
+                status: get('ns1:DocumentStatusCode'),
+                orderRef: doc.getElementsByTagName('ns2:OrderReference')[0]?.getElementsByTagName('ns1:ID')[0]?.textContent || '',
+                supplier: doc.getElementsByTagName('ns2:DespatchSupplierParty')[0]?.getElementsByTagName('ns1:Name')[0]?.textContent || '',
+                customer: doc.getElementsByTagName('ns2:DeliveryCustomerParty')[0]?.getElementsByTagName('ns1:Name')[0]?.textContent || '',
+                street: get('ns1:StreetName'),
+                city: get('ns1:CityName'),
+                postal: get('ns1:PostalZone'),
+            })
+
+            setLoading(false)
+        }
+        fetchDespatch()
+    }, [id])
 
     return (
         <DashboardLayout>
@@ -31,39 +62,13 @@ export default function ViewDespatch() {
                 <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                     <h2 className="text-lg font-semibold mb-4">Update Despatch</h2>
                     <div className="grid grid-cols-2 gap-4">
-                        <input
-                            type="number"
-                            placeholder="Delivered Quantity"
-                            value={deliveredQuantity}
-                            onChange={(event) => setDeliveredQuantity(event.target.value)}
-                            className="border border-gray-300 rounded-lg px-4 py-2"
-                        />
-                        <input
-                            type="number"
-                            placeholder="Backorder Quantity"
-                            value={backorderQuantity}
-                            onChange={(event) => setBackorderQuantity(event.target.value)}
-                            className="border border-gray-300 rounded-lg px-4 py-2"
-                        />
-                        <input
-                            type="text"
-                            placeholder="Backorder Reason"
-                            value={backorderReason}
-                            onChange={(event) => setBackorderReason(event.target.value)}
-                            className="border border-gray-300 rounded-lg px-4 py-2"
-                        />
-                        <input
-                            type="text"
-                            placeholder="Note"
-                            value={note}
-                            onChange={(event) => setNote(event.target.value)}
-                            className="border border-gray-300 rounded-lg px-4 py-2"
-                        />
+                        <input type="number" placeholder="Delivered Quantity" value={deliveredQuantity} onChange={(e) => setDeliveredQuantity(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2" />
+                        <input type="number" placeholder="Backorder Quantity" value={backorderQuantity} onChange={(e) => setBackorderQuantity(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2" />
+                        <input type="text" placeholder="Backorder Reason" value={backorderReason} onChange={(e) => setBackorderReason(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2" />
+                        <input type="text" placeholder="Note" value={note} onChange={(e) => setNote(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2" />
                     </div>
                     <div className="flex justify-end mt-4">
-                        <button className="bg-deep-sky-blue-600 text-white px-6 py-2 rounded-lg hover:bg-deep-sky-blue-700">
-                            Update
-                        </button>
+                        <button className="bg-deep-sky-blue-600 text-white px-6 py-2 rounded-lg hover:bg-deep-sky-blue-700">Update</button>
                     </div>
                 </div>
 
@@ -77,17 +82,21 @@ export default function ViewDespatch() {
                             {showFormatted ? 'View Raw XML' : 'View Formatted'}
                         </button>
                     </div>
-                    {showFormatted ? (
-                        <div className="bg-gray-50 border border-gray-100 rounded-lg p-4 text-sm">
-                            <p><span className="text-gray-500">ID:</span> {id}</p>
-                            <p><span className="text-gray-500">Issue Date:</span> 2026-04-21</p>
-                            <p><span className="text-gray-500">Status:</span> NoStatus</p>
-                            <p><span className="text-gray-500">Type:</span> delivery</p>
-                            <p><span className="text-gray-500">Order Reference:</span> PO-2026-001</p>
+                    {loading ? (
+                        <p className="text-gray-400">Loading...</p>
+                    ) : showFormatted && formatted ? (
+                        <div className="bg-gray-50 border border-gray-100 rounded-lg p-4 text-sm flex flex-col gap-2">
+                            <p><span className="text-gray-500 font-medium">ID:</span> {formatted.id}</p>
+                            <p><span className="text-gray-500 font-medium">Issue Date:</span> {formatted.issueDate}</p>
+                            <p><span className="text-gray-500 font-medium">Status:</span> {formatted.status}</p>
+                            <p><span className="text-gray-500 font-medium">Order Reference:</span> {formatted.orderRef}</p>
+                            <p><span className="text-gray-500 font-medium">Supplier:</span> {formatted.supplier}</p>
+                            <p><span className="text-gray-500 font-medium">Customer:</span> {formatted.customer}</p>
+                            <p><span className="text-gray-500 font-medium">Delivery Address:</span> {formatted.street}, {formatted.city} {formatted.postal}</p>
                         </div>
                     ) : (
                         <pre className="bg-gray-50 border border-gray-100 rounded-lg p-4 text-sm overflow-auto">
-                            {mockDespatch}
+                            {despatch ? formatXml(despatch) : ''}
                         </pre>
                     )}
                 </div>
