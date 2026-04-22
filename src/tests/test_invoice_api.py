@@ -3,7 +3,7 @@ import json
 from src.invoice_handling import createInvoice, retrieveInvoiceById, updateInvoiceById, deleteInvoiceById, createCreditNote, InvoiceStatus, InvoiceToPdf
 
 class Test:
-    def test_invoice(self):
+    def test_invoice_v1(self):
         # create invoice
         createInvoiceResponse = createInvoice()
         assert createInvoiceResponse["statusCode"] == 201
@@ -16,10 +16,8 @@ class Test:
         updateInvoiceResponse = updateInvoiceById(invoice_id)
         assert updateInvoiceResponse["statusCode"] == 200
 
-        deleteInvoiceResponse = deleteInvoiceById(invoice_id)
-        assert deleteInvoiceResponse["statusCode"] == 200
-
         updateInvoiceStatus = InvoiceStatus(invoice_id)
+        print(json.loads(updateInvoiceStatus['body']))
         assert updateInvoiceStatus["statusCode"] == 200
         
         createCreditNoteResponse = createCreditNote(invoice_id)
@@ -27,4 +25,14 @@ class Test:
 
         ConvertInvoiceToPdf = InvoiceToPdf(invoice_id)
         assert ConvertInvoiceToPdf["statusCode"] == 200
+
+    def test_invoice_v2(self):
+
+        createInvoiceResponse = createInvoice()
+        assert createInvoiceResponse["statusCode"] == 201
+        invoice_id = json.loads(createInvoiceResponse['body'])['invoice']['invoice_id']
+        assert invoice_id is not None
+    
+        deleteInvoiceResponse = deleteInvoiceById(invoice_id)
+        assert deleteInvoiceResponse["statusCode"] == 204
 

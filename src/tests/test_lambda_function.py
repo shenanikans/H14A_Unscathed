@@ -219,3 +219,7 @@ class TestLambdaDespatchRequiresAuth:
         response = lambda_handler(make_event('GET', DESPATCH_ADVICE_PATH), {})
         mock_retrieve.assert_not_called()
         assert response['statusCode'] == 401
+
+
+class TestLambdaInvoiceAPI:
+    

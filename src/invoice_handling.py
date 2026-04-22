@@ -84,7 +84,7 @@ def updateInvoiceById(invoice_id):
 
 def deleteInvoiceById(invoice_id):
     try:
-        response = requests.get(f"{INVOICE_URL}/v1/invoices/{invoice_id}", headers=HEADERS)
+        response = requests.delete(f"{INVOICE_URL}/v1/invoices/{invoice_id}", headers=HEADERS)
         if response.status_code == 204:
             return build_response(204, JSON_TYPE, {"message": "Invoice deleted successfully"})
         return build_response(response.status_code, JSON_TYPE, response.json())
