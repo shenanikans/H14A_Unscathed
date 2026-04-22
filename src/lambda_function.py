@@ -5,6 +5,7 @@ from botocore.exceptions import ClientError
 # Import functions and constants that perform the core data processing
 from src.helper_functions import build_response
 from src.constants import JSON_TYPE
+from src.constants import INVOICE_URL
 from src.delete_despatch import delete_despatch
 from src.retrieve_despatch import retrieve_despatch
 from src.generate_despatch import generate_despatch
@@ -12,6 +13,7 @@ from src.retrieve_all_despatch import retrieve_all_despatch_advice
 from src.update_despatch import update_despatch_advice
 from src.auth_service import register, login, logout
 from src.auth_dependencies import get_auth_context
+from src.invoice_handling import createInvoice, retrieveInvoiceById, updateInvoiceById, deleteInvoiceById, createCreditNote, InvoiceStatus, InvoiceToPdf
 
 # Initialise URL constants
 BASE_URL = '/api/despatch'
@@ -23,6 +25,8 @@ AUTH_REGISTER_PATH = AUTH_BASE + '/register'
 AUTH_LOGIN_PATH = AUTH_BASE + '/login'
 AUTH_LOGOUT_PATH = AUTH_BASE + '/logout'
 
+# Invoice Constants
+INVOICE_PATH = '/v1/invoices'
 
 def _auth_error_response(message: str):
     return build_response(401, JSON_TYPE, {"message": message})
@@ -127,6 +131,52 @@ def lambda_handler(event, context):
             }
         else:
             response = build_response(404, JSON_TYPE, 'Not Found')
+
+        # Invoice Routes
+        if http_method == 'POST' and path == INVOICE_PATH:
+            response = createInvoice()
+
+        elif http_method == 'GET' and path.startswith(INVOICE_PATH) and path_parameters:
+            invoice_id = path_parameters.get('invoice_id')
+            if not invoice_id:
+                response = build_response(404, JSON_TYPE, "Not Found")
+            else:
+                response = retrieveInvoiceById(invoice_id)
+
+        elif http_method == 'PUT' and path.startswith(INVOICE_PATH) and path_parameters:
+            invoice_id = path_parameters.get('invoice_id')
+            if not invoice_id:
+                response = build_response(404, JSON_TYPE, "Not Found")
+            else:
+                response = updateInvoiceById(invoice_id)
+
+        elif http_method == 'DELETE' and path.startswith(INVOICE_PATH) and path_parameters:
+            invoice_id = path_parameters.get('invoice_id')
+            if not invoice_id:
+                response = build_response(404, JSON_TYPE, "Not Found")
+            else:
+                response = deleteInvoiceById(invoice_id)
+
+        elif http_method == 'POST' and path.startswith(INVOICE_PATH) and path.endswith('/status') and path_parameters:
+            invoice_id = path_parameters.get('invoice_id')
+            if not invoice_id:
+                response = build_response(404, JSON_TYPE, "Not Found")
+            else:
+                response = InvoiceStatus(invoice_id)    
+
+        elif http_method == 'POST' and path.startswith(INVOICE_PATH) and path.endswith('/credit-note') and path_parameters:
+            invoice_id = path_parameters.get('invoice_id')
+            if not invoice_id:
+                response = build_response(404, JSON_TYPE, "Not Found")
+            else:
+                response = createCreditNote(invoice_id)
+                
+        elif http_method == 'GET' and path.startswith(INVOICE_PATH) and path.endswith('/pdf') and path_parameters:
+            invoice_id = path_parameters.get('invoice_id')
+            if not invoice_id:
+                response = build_response(404, JSON_TYPE, "Not Found")
+            else:
+                response = InvoiceToPdf(invoice_id)
 
     # Handle any errors raised accordingly
     except Exception as e:
