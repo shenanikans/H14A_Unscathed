@@ -23,6 +23,7 @@ export default function CreateDespatch() {
     const [country, setCountry] = useState('')
     const [mode, setMode] = useState(null)
     const [file, setFile] = useState(null)
+    const [uploadedAndParsed, setUploadedAndParsed] = useState(false)
     const [hoverSelect, setHoverSelect] = useState(false)
     const [hoverUpload, setHoverUpload] = useState(false)
     const [hoverManual, setHoverManual] = useState(false)
@@ -35,6 +36,7 @@ export default function CreateDespatch() {
             setHoverUpload(false)
         }
         if (mode === 'manual') {
+            setUploadedAndParsed(false)
             const fetchNextId = async () => {
                 const token = localStorage.getItem('accessToken')
                 const response = await fetch('/atlas/api/despatch/next-id', {
@@ -47,15 +49,53 @@ export default function CreateDespatch() {
         }
     }, [mode])
 
+    const handleFileUpload = async (event) => {
+        const uploadedFile = event.target.files[0]
+        if (!uploadedFile) return
+
+        setFile(uploadedFile)
+        setHoverUpload(false)
+
+        const xmlText = await uploadedFile.text()
+        const parser = new DOMParser()
+        const doc = parser.parseFromString(xmlText, 'application/xml')
+
+        const getNS = (tag) => doc.getElementsByTagNameNS('urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2', tag)[0]?.textContent || ''
+
+        const sellerParty = doc.getElementsByTagName('cac:SellerSupplierParty')[0] || doc.getElementsByTagNameNS('urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2', 'SellerSupplierParty')[0]
+        const buyerParty = doc.getElementsByTagName('cac:BuyerCustomerParty')[0] || doc.getElementsByTagNameNS('urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2', 'BuyerCustomerParty')[0]
+
+        const sellerName = sellerParty?.getElementsByTagName('cbc:Name')[0]?.textContent || sellerParty?.getElementsByTagNameNS('urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2', 'Name')[0]?.textContent || ''
+        const buyerName = buyerParty?.getElementsByTagName('cbc:Name')[0]?.textContent || buyerParty?.getElementsByTagNameNS('urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2', 'Name')[0]?.textContent || ''
+
+        setOrderRefId(getNS('ID'))
+        if (getNS('IssueDate')) setIssueDate(getNS('IssueDate'))
+        setSupplierPartyName(sellerName || 'Atlas')
+        setCustomerPartyName(buyerName)
+        setStreetName(getNS('StreetName'))
+        setCityName(getNS('CityName'))
+        setPostalZone(getNS('PostalZone'))
+        setCountry(getNS('IdentificationCode'))
+
+        const token = localStorage.getItem('accessToken')
+        const res = await fetch('/atlas/api/despatch/next-id', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+        const data = await res.json()
+        setDocId(data.nextId)
+
+        setUploadedAndParsed(true)
+    }
+
     const handleSubmit = async () => {
-        if (mode === 'upload' && !file) return
+        if (!file && mode !== 'manual') return
 
         const token = localStorage.getItem('accessToken')
         let body
 
-        if (file) {
+        if (file && !uploadedAndParsed) {
             body = await file.text()
-        } else if (mode === 'manual') {
+        } else {
             body = `<?xml version="1.0" encoding="UTF-8"?><Order xmlns="urn:oasis:names:specification:ubl:schema:xsd:Order-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"><cbc:ID>${orderRefId}</cbc:ID><cbc:IssueDate>${issueDate}</cbc:IssueDate><cac:OrderReference><cbc:ID>${orderRefId}</cbc:ID><cbc:IssueDate>${issueDate}</cbc:IssueDate></cac:OrderReference><cac:SellerSupplierParty><cac:Party><cac:PartyName><cbc:Name>${supplierPartyName}</cbc:Name></cac:PartyName></cac:Party></cac:SellerSupplierParty><cac:BuyerCustomerParty><cac:Party><cac:PartyName><cbc:Name>${customerPartyName}</cbc:Name></cac:PartyName><cac:PostalAddress><cbc:StreetName>${streetName}</cbc:StreetName><cbc:CityName>${cityName}</cbc:CityName><cbc:PostalZone>${postalZone}</cbc:PostalZone><cbc:CountrySubentity>${state}</cbc:CountrySubentity><cac:Country><cbc:IdentificationCode>${country}</cbc:IdentificationCode></cac:Country></cac:PostalAddress></cac:Party></cac:BuyerCustomerParty></Order>`
         }
 
@@ -76,6 +116,31 @@ export default function CreateDespatch() {
         }
     }
 
+    const resetForm = () => {
+        setFile(null)
+        setUploadedAndParsed(false)
+        setDocId('')
+        setIssueDate(new Date().toISOString().split('T')[0])
+        setIssueTime(new Date().toTimeString().split(' ')[0])
+        setDocNote('')
+        setOrderRefId('')
+        setSupplierPartyName('Atlas')
+        setSupplierEndpointId('')
+        setSupplierSchemeId('')
+        setCustomerPartyName('')
+        setCustomerEndpointId('')
+        setCustomerSchemeId('')
+        setStreetName('')
+        setCityName('')
+        setPostalZone('')
+        setState('')
+        setCountry('')
+    }
+
+    const canSubmit = 
+        (uploadedAndParsed && orderRefId && customerPartyName) ||
+        (mode === 'manual' && orderRefId && customerPartyName && streetName && cityName && postalZone && country)
+
     return (
         <DashboardLayout>
             <h1 className="text-2xl font-bold mb-8">Create Despatch Advice</h1>
@@ -85,7 +150,7 @@ export default function CreateDespatch() {
                     <h2 className="text-lg font-semibold mb-4">Order Source</h2>
                     <div className="flex gap-4">
                         <button
-                            onClick={() => setMode('select')}
+                            onClick={() => { resetForm(); setMode('select') }}
                             onMouseEnter={() => setHoverSelect(true)}
                             onMouseLeave={() => setHoverSelect(false)}
                             className={`flex-1 py-3 rounded-lg border text-sm font-medium transition-colors duration-100 ${mode === 'select' || hoverSelect ? 'bg-deep-sky-blue-600 text-white border-deep-sky-blue-600' : 'bg-white text-gray-600 border-gray-300'}`}
@@ -93,15 +158,15 @@ export default function CreateDespatch() {
                             Select Order
                         </button>
                         <button
-                            onClick={() => setMode('upload')}
+                            onClick={() => { resetForm(); setMode('upload') }}
                             onMouseEnter={() => setHoverUpload(true)}
                             onMouseLeave={() => setHoverUpload(false)}
-                            className={`flex-1 py-3 rounded-lg border text-sm font-medium transition-colors duration-100 ${hoverUpload ? 'bg-deep-sky-blue-600 text-white border-deep-sky-blue-600' : 'bg-white text-gray-600 border-gray-300'}`}
+                            className={`flex-1 py-3 rounded-lg border text-sm font-medium transition-colors duration-100 ${uploadedAndParsed || hoverUpload ? 'bg-deep-sky-blue-600 text-white border-deep-sky-blue-600' : 'bg-white text-gray-600 border-gray-300'}`}
                         >
                             Upload XML
                         </button>
                         <button
-                            onClick={() => setMode('manual')}
+                            onClick={() => { resetForm(); setMode('manual') }}
                             onMouseEnter={() => setHoverManual(true)}
                             onMouseLeave={() => setHoverManual(false)}
                             className={`flex-1 py-3 rounded-lg border text-sm font-medium transition-colors duration-100 ${mode === 'manual' || hoverManual ? 'bg-deep-sky-blue-600 text-white border-deep-sky-blue-600' : 'bg-white text-gray-600 border-gray-300'}`}
@@ -118,14 +183,11 @@ export default function CreateDespatch() {
                         type="file"
                         accept=".xml"
                         ref={fileInputRef}
-                        onChange={(event) => {
-                            setFile(event.target.files[0])
-                            setHoverUpload(false)
-                        }}
+                        onChange={handleFileUpload}
                         className="hidden"
                     />
 
-                    {mode === 'manual' && (
+                    {(mode === 'manual' || uploadedAndParsed) && (
                         <div className="mt-6 flex flex-col gap-6">
                             <div>
                                 <h3 className="text-sm font-semibold text-gray-600 mb-3">Document Details</h3>
@@ -184,7 +246,7 @@ export default function CreateDespatch() {
                     )}
                 </div>
 
-                {mode === 'manual' && (
+                {(mode === 'manual' || uploadedAndParsed) && (
                     <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                         <h2 className="text-lg font-semibold mb-4">Supplier Details</h2>
                         <div className="grid grid-cols-2 gap-4">
@@ -195,14 +257,16 @@ export default function CreateDespatch() {
                     </div>
                 )}
 
-                <div className="flex justify-end">
-                    <button
-                        onClick={handleSubmit}
-                        className="bg-deep-sky-blue-600 text-white px-6 py-3 rounded-lg hover:bg-deep-sky-blue-700"
-                    >
-                        Create Despatch
-                    </button>
-                </div>
+                {canSubmit && (
+                    <div className="flex justify-end">
+                        <button
+                            onClick={handleSubmit}
+                            className="bg-deep-sky-blue-600 text-white px-6 py-3 rounded-lg hover:bg-deep-sky-blue-700"
+                        >
+                            Create Despatch
+                        </button>
+                    </div>
+                )}
             </div>
         </DashboardLayout>
     )
