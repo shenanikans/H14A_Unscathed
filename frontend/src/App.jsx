@@ -19,6 +19,7 @@ import CreateDespatch from './pages/seller/CreateDespatch'
 import CustomerDespatch from './pages/customer/Despatch'
 import CustomerInvoices from './pages/customer/Invoices'
 import GenerateInvoice from './pages/seller/GenerateInvoice'
+import Pricing from './pages/public/Pricing'
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/register" element={<Register/>} />
         <Route path="/privacy-policy" element={<Privacy/>} />
         <Route path="/terms" element={<Terms/>} />
+        <Route path="/pricing" element={<Pricing/>} />
 
         {/* Seller routes */}
         <Route path="/dashboard" element={<SellerDashboard/>} />
