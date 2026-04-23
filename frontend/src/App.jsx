@@ -20,6 +20,7 @@ import CustomerDespatch from './pages/customer/Despatch'
 import CustomerInvoices from './pages/customer/Invoices'
 import GenerateInvoice from './pages/seller/GenerateInvoice'
 import Pricing from './pages/public/Pricing'
+import CustomerSettings from './pages/customer/Settings'
 
 export default function App() {
   return (
@@ -50,6 +51,7 @@ export default function App() {
         <Route path="/customer-create-order" element={<CustomerCreateOrder/>} />
         <Route path="/customer-despatch" element={<CustomerDespatch />} />
         <Route path="/customer-invoices" element={<CustomerInvoices />} />
+        <Route path="/settings" element={<CustomerSettings />} />
       </Routes>
     </BrowserRouter>
   )
