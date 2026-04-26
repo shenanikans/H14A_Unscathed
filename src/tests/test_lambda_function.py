@@ -290,7 +290,7 @@ class TestLambdaInvoiceToPdf:
 
 class TestLambdaCreateOrder:
    @patch('src.lambda_function.createOrder')
-   def test_post_invoice_routes_correctly(self, mock_create):
+   def test_create_order_route(self, mock_create):
        mock_create.return_value = {'statusCode': 201}
        response = lambda_handler(make_event('POST', '/api/order'), {})
        mock_create.assert_called_once()
@@ -299,7 +299,7 @@ class TestLambdaCreateOrder:
 
 class TestLambdaRetrieveOrder:
    @patch('src.lambda_function.retrieveOrderById')
-   def test_get_invoice_by_id_routes_correctly(self, mock_retrieve):
+   def test_retrieve_order_route(self, mock_retrieve):
        mock_retrieve.return_value = {'statusCode': 200}
        response = lambda_handler(make_event('GET', '/api/order/1', path_params={'order-id': '1'}), {})
        mock_retrieve.assert_called_once_with('1')
@@ -308,7 +308,7 @@ class TestLambdaRetrieveOrder:
 
 class TestLambdaUpdateOrder:
    @patch('src.lambda_function.updateOrder')
-   def test_put_invoice_routes_correctly(self, mock_update):
+   def test_update_order_route(self, mock_update):
        mock_update.return_value = {'statusCode': 200}
        response = lambda_handler(make_event('PUT', '/api/order/1', path_params={'order-id': '1'}), {})
        mock_update.assert_called_once_with('1')
@@ -317,7 +317,7 @@ class TestLambdaUpdateOrder:
 
 class TestLambdaDeleteOrder:
    @patch('src.lambda_function.deleteOrder')
-   def test_delete_invoice_routes_correctly(self, mock_delete):
+   def test_delete_order_route(self, mock_delete):
        mock_delete.return_value = {'statusCode': 204}
        response = lambda_handler(make_event('DELETE', '/api/order/1', path_params={'order-id': '1'}), {})
        mock_delete.assert_called_once_with('1')
@@ -326,7 +326,7 @@ class TestLambdaDeleteOrder:
 
 class TestLambdaAddToCart:
    @patch('src.lambda_function.addItemToShoppingCart')
-   def test_post_invoice_status_routes_correctly(self, mock_add):
+   def test_add_to_cart_route(self, mock_add):
        mock_add.return_value = {'statusCode': 200}
        response = lambda_handler(make_event('POST', f'{INVOICE_PATH}/INV-123/status', path_params={}, body = {}), {})
        mock_add.assert_called_once()
@@ -335,7 +335,7 @@ class TestLambdaAddToCart:
 
 class TestLambdaDeleteFromCart:
    @patch('src.lambda_function.removeItemFromShoppingCart')
-   def test_post_credit_note_routes_correctly(self, mock_delete):
+   def test_delete_from_cart_route(self, mock_delete):
        mock_delete.return_value = {'statusCode': 204}
        response = lambda_handler(make_event('DELETE', '/api/cart/items/1', path_params={ "item-id": "1" }))
        mock_delete.assert_called_once_with('1')
@@ -344,7 +344,7 @@ class TestLambdaDeleteFromCart:
 
 class TestLambdaUpdateCart:
    @patch('src.lambda_function.updateItemInShoppingCart')
-   def test_post_credit_note_routes_correctly(self, mock_update):
+   def test_update_cart_route(self, mock_update):
        mock_update.return_value = {'statusCode': 200}
        response = lambda_handler(make_event('PUT', '/api/cart/items/1', path_params={ "item-id": "1" }, body={ "quantity", 1 }))
        mock_update.assert_called_once_with('1')
@@ -353,7 +353,7 @@ class TestLambdaUpdateCart:
 
 class TestLambdaRetrieveCart:
    @patch('src.lambda_function.retrieveShoppingCart')
-   def test_post_credit_note_routes_correctly(self, mock_retrieve):
+   def test_retrieve_cart_route(self, mock_retrieve):
        mock_retrieve.return_value = {'statusCode': 200}
        response = lambda_handler(make_event('GET', '/api/cart', path_params={}))
        mock_retrieve.assert_called_once()
@@ -362,7 +362,7 @@ class TestLambdaRetrieveCart:
 
 class TestLambdaClearCart:
    @patch('src.lambda_function.clearShoppingCart')
-   def test_post_credit_note_routes_correctly(self, mock_clear):
+   def test_clear_cart_route(self, mock_clear):
        mock_clear.return_value = {'statusCode': 204}
        response = lambda_handler(make_event('DELETE', '/api/cart', path_params={}))
        mock_clear.assert_called_once()
