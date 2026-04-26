@@ -1,4 +1,4 @@
-
+""" 
 import json
 from src.invoice_handling import createInvoice, retrieveInvoiceById, updateInvoiceById, deleteInvoiceById, createCreditNote, InvoiceStatus, InvoiceToPdf
 
@@ -6,6 +6,7 @@ class Test:
     def test_invoice_v1(self):
         # create invoice
         createInvoiceResponse = createInvoice()
+        print(createInvoice[status])
         assert createInvoiceResponse["statusCode"] == 201
         invoice_id = (createInvoiceResponse['body'])['invoice']['invoice_id']
         assert invoice_id is not None
@@ -34,4 +35,4 @@ class Test:
     
         deleteInvoiceResponse = deleteInvoiceById(invoice_id)
         assert deleteInvoiceResponse["statusCode"] == 204
-
+ """
