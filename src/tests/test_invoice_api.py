@@ -1,5 +1,6 @@
 import json
 from src.invoice_handling import createInvoice, retrieveInvoiceById, updateInvoiceById, deleteInvoiceById, createCreditNote, InvoiceStatus, InvoiceToPdf
+import pytest
 
 pytestmark = pytest.mark.skip(reason="Invoice API is non-functional")
 
