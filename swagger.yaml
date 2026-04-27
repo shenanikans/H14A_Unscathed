@@ -30,8 +30,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthSuccess'
-        '500':
-          description: Server error
+        '503':
+          description: Service unavailable - underlying datastore not ready
           content:
             application/json:
               schema:
@@ -41,8 +41,11 @@ paths:
       tags:
         - Despatch Handling v1
       summary: Retrieve all despatch advice documents
-      description: Retrieve all despatch advice documents stored in the database.
+      description: Retrieve all despatch advice documents stored for the authenticated user.
       operationId: retrieveAllDespatchesV1
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
       responses:
         '200':
           description: Successful operation
@@ -50,8 +53,20 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/DespatchDoc'
-        '500':
-          description: Server error
+        '401':
+          description: Unauthorized - missing or invalid Bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        '403':
+          description: Forbidden - missing, invalid, or revoked API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        '503':
+          description: Service unavailable - underlying datastore error
           content:
             application/json:
               schema:
@@ -62,6 +77,9 @@ paths:
       summary: Generate a despatch advice document
       description: Generate a despatch advice document using an order document and user-provided inputs.
       operationId: generateDespatchV1
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
       requestBody:
         content:
           application/json:
@@ -76,7 +94,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/DespatchDoc'
         '400':
-          description: Bad Request - Multiple possible causes
+          description: Bad Request - Multiple possible causes (invalid XML, parse error, AWS persistence error)
           content:
             application/json:
               schema:
@@ -88,6 +106,18 @@ paths:
                 InvalidElementType:
                   value:
                     message: "Invalid element type provided"
+        '401':
+          description: Unauthorized - missing or invalid Bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        '403':
+          description: Forbidden - missing, invalid, or revoked API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
         '500':
           description: Server error
           content:
@@ -101,13 +131,16 @@ paths:
       summary: Retrieve a despatch advice document
       description: Given a despatch advice ID, retrieve the corresponding despatch advice document stored in the database.
       operationId: retrieveDespatchByIdV1
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
       parameters:
         - name: despatch-id
           in: path
           required: true
           schema:
-            type: integer
-            example: 565899
+            type: string
+            example: "565899000"
       responses:
         '200':
           description: Successful operation
@@ -115,7 +148,19 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/DespatchDoc'
-        '400':
+        '401':
+          description: Unauthorized - missing or invalid Bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        '403':
+          description: Forbidden - missing, invalid, or revoked API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        '404':
           description: Despatch advice not found
           content:
             application/json:
@@ -125,8 +170,8 @@ paths:
                 DespatchAdviceNotFound:
                   value:
                     message: "Despatch advice 1 not found"
-        '500':
-          description: Server error
+        '503':
+          description: Service unavailable - underlying datastore error
           content:
             application/json:
               schema:
@@ -137,13 +182,16 @@ paths:
       summary: Update a despatch advice document
       description: Given a despatch advice ID, update the corresponding despatch advice document stored in the database.
       operationId: updateDespatchByIdV1
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
       parameters:
         - name: despatch-id
           in: path
           required: true
           schema:
-            type: integer
-            example: 565899
+            type: string
+            example: "565899000"
       requestBody:
         content:
           application/json:
@@ -158,6 +206,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/DespatchDoc'
         '400':
+          description: Bad Request - invalid input (e.g. non-numeric quantity, malformed JSON)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+              examples:
+                InvalidElementType:
+                  value:
+                    message: "Delivered quantity must be a number."
+                InvalidJsonBody:
+                  value:
+                    message: "Invalid JSON in request body"
+        '401':
+          description: Unauthorized - missing or invalid Bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        '403':
+          description: Forbidden - missing, invalid, or revoked API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        '404':
           description: Despatch advice not found
           content:
             application/json:
@@ -167,11 +240,14 @@ paths:
                 DespatchAdviceNotFound:
                   value:
                     message: "Despatch advice 1 not found"
-                InvalidElementType:
-                  value:
-                    message: "Invalid element type provided"
         '500':
-          description: Server error
+          description: Server error - stored despatch document is invalid XML
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+        '503':
+          description: Service unavailable - underlying datastore error
           content:
             application/json:
               schema:
@@ -182,13 +258,16 @@ paths:
       summary: Delete a despatch advice document
       description: Given a despatch advice ID, delete the corresponding despatch advice document stored in the database.
       operationId: deleteDespatchByIdV1
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
       parameters:
         - name: despatch-id
           in: path
           required: true
           schema:
-            type: integer
-            example: 565899
+            type: string
+            example: "565899000"
       responses:
         '204':
           description: Content deleted
@@ -196,7 +275,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SuccessfulDeletion'
-        '400':
+        '401':
+          description: Unauthorized - missing or invalid Bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        '403':
+          description: Forbidden - missing, invalid, or revoked API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        '404':
           description: Despatch advice not found
           content:
             application/json:
@@ -206,11 +297,8 @@ paths:
                 DespatchAdviceNotFound:
                   value:
                     message: "Despatch advice 1 not found"
-                InvalidElementType:
-                  value:
-                    message: "Invalid element type provided"
-        '500':
-          description: Server error
+        '503':
+          description: Service unavailable - underlying datastore error
           content:
             application/json:
               schema:
@@ -315,6 +403,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/GenericError'
 
+  /v1/api/auth/create-api-key:
+    post:
+      tags:
+        - User Authorisation
+      summary: Create an API key
+      description: |-
+        Create a new API key for the authenticated user. Requires a Bearer
+        token (JWT) - existing API keys cannot be used to mint new ones. The
+        returned `api_key` can subsequently be supplied in the `X-API-Key`
+        header to authenticate requests when JWT is not practical.
+      operationId: createApiKey
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: API key created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeyCreateResponse'
+        '401':
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+
   /v1/api/auth/google:
     post:
       tags:
@@ -385,8 +500,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthSuccess'
-        '500':
-          description: Server error
+        '503':
+          description: Service unavailable - underlying datastore not ready
           content:
             application/json:
               schema:
@@ -400,6 +515,7 @@ paths:
       operationId: generateDespatchV2
       security:
         - bearerAuth: []
+        - apiKeyAuth: []
       requestBody:
         content:
           application/json:
@@ -413,14 +529,8 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/DespatchDoc'
-        '401':
-          description: Unauthorized - missing or invalid Bearer token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericError'
         '400':
-          description: Bad Request - Multiple possible causes
+          description: Bad Request - Multiple possible causes (invalid XML, parse error, AWS persistence error)
           content:
             application/json:
               schema:
@@ -432,6 +542,18 @@ paths:
                 InvalidElementType:
                   value:
                     message: "Invalid element type provided"
+        '401':
+          description: Unauthorized - missing or invalid Bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        '403':
+          description: Forbidden - missing, invalid, or revoked API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
         '500':
           description: Server error
           content:
@@ -442,10 +564,11 @@ paths:
       tags:
         - Despatch Handling v2
       summary: Retrieve all despatch advice documents
-      description: Retrieve all despatch advice documents stored in the database.
+      description: Retrieve all despatch advice documents stored for the authenticated user.
       operationId: retrieveAllDespatchesV2
       security:
         - bearerAuth: []
+        - apiKeyAuth: []
       responses:
         '200':
           description: Successful operation
@@ -459,8 +582,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenericError'
-        '500':
-          description: Server error
+        '403':
+          description: Forbidden - missing, invalid, or revoked API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        '503':
+          description: Service unavailable - underlying datastore error
           content:
             application/json:
               schema:
@@ -474,13 +603,14 @@ paths:
       operationId: retrieveDespatchByIdV2
       security:
         - bearerAuth: []
+        - apiKeyAuth: []
       parameters:
         - name: despatch-id
           in: path
           required: true
           schema:
-            type: integer
-            example: 565899
+            type: string
+            example: "565899000"
       responses:
         '200':
           description: Successful operation
@@ -494,7 +624,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenericError'
-        '400':
+        '403':
+          description: Forbidden - missing, invalid, or revoked API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        '404':
           description: Despatch advice not found
           content:
             application/json:
@@ -504,8 +640,8 @@ paths:
                 DespatchAdviceNotFound:
                   value:
                     message: "Despatch advice 1 not found"
-        '500':
-          description: Server error
+        '503':
+          description: Service unavailable - underlying datastore error
           content:
             application/json:
               schema:
@@ -518,13 +654,14 @@ paths:
       operationId: updateDespatchByIdV2
       security:
         - bearerAuth: []
+        - apiKeyAuth: []
       parameters:
         - name: despatch-id
           in: path
           required: true
           schema:
-            type: integer
-            example: 565899
+            type: string
+            example: "565899000"
       requestBody:
         content:
           application/json:
@@ -538,13 +675,32 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/DespatchDoc'
+        '400':
+          description: Bad Request - invalid input (e.g. non-numeric quantity, malformed JSON)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+              examples:
+                InvalidElementType:
+                  value:
+                    message: "Delivered quantity must be a number."
+                InvalidJsonBody:
+                  value:
+                    message: "Invalid JSON in request body"
         '401':
           description: Unauthorized - missing or invalid Bearer token
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenericError'
-        '400':
+        '403':
+          description: Forbidden - missing, invalid, or revoked API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        '404':
           description: Despatch advice not found
           content:
             application/json:
@@ -554,11 +710,14 @@ paths:
                 DespatchAdviceNotFound:
                   value:
                     message: "Despatch advice 1 not found"
-                InvalidElementType:
-                  value:
-                    message: "Invalid element type provided"
         '500':
-          description: Server error
+          description: Server error - stored despatch document is invalid XML
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+        '503':
+          description: Service unavailable - underlying datastore error
           content:
             application/json:
               schema:
@@ -571,13 +730,14 @@ paths:
       operationId: deleteDespatchByIdV2
       security:
         - bearerAuth: []
+        - apiKeyAuth: []
       parameters:
         - name: despatch-id
           in: path
           required: true
           schema:
-            type: integer
-            example: 565899
+            type: string
+            example: "565899000"
       responses:
         '204':
           description: Content deleted
@@ -591,7 +751,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenericError'
-        '400':
+        '403':
+          description: Forbidden - missing, invalid, or revoked API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        '404':
           description: Despatch advice not found
           content:
             application/json:
@@ -601,17 +767,14 @@ paths:
                 DespatchAdviceNotFound:
                   value:
                     message: "Despatch advice 1 not found"
-                InvalidElementType:
-                  value:
-                    message: "Invalid element type provided"
-        '500':
-          description: Server error
+        '503':
+          description: Service unavailable - underlying datastore error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ServerError'
 
-  /api/validate/order:
+  /v1/api/validate/order:
     post:
       tags:
         - Document Validation
@@ -649,7 +812,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ServerError'
 
-  /api/validate/despatch:
+  /v1/api/validate/despatch:
     post:
       tags:
         - Document Validation
@@ -687,7 +850,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ServerError'
 
-  /api/validate/invoice:
+  /v1/api/validate/invoice:
     post:
       tags:
         - Document Validation
@@ -735,6 +898,10 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
   schemas:
     HealthSuccess:
       type: string
@@ -753,6 +920,14 @@ components:
           description: A human-readable message describing the error
       required:
         - message
+    ApiKeyCreateResponse:
+      type: object
+      required: [api_key]
+      properties:
+        api_key:
+          type: string
+          description: API key (UUID v4) to use in the `X-API-Key` header.
+          example: 550e8400-e29b-41d4-a716-446655440000
     ValidationResponse:
       type: object
       required: [valid, errors]
@@ -809,8 +984,8 @@ components:
           xml:
             attribute: true # Renders 'id' as an XML attribute
         ID:
-          type: integer
-          example: 565899
+          type: string
+          example: "565899000"
         IssueDate:
           type: string
           format: date
@@ -841,8 +1016,8 @@ components:
           xml:
             attribute: true # Renders 'id' as an XML attribute
         ID:
-          type: integer
-          example: 565899
+          type: string
+          example: "565899000"
         IssueDate:
           type: string
           format: date
