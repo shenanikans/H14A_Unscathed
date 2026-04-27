@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 
+const API = import.meta.env.VITE_API_URL ?? '/atlas'
+
 export default function Login() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -12,12 +14,12 @@ export default function Login() {
     const [forgotError, setForgotError] = useState('')
     const [forgotLoading, setForgotLoading] = useState(false)
     const navigate = useNavigate()
-
+    
     const handleSubmit = async (event) => {
         event.preventDefault()
         setError('')
 
-        const response = await fetch('/atlas/api/auth/login', {
+        const response = await fetch(`${API}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
@@ -45,7 +47,7 @@ export default function Login() {
         setForgotLoading(true)
 
         try {
-            const response = await fetch('/atlas/api/auth/forgot-password', {
+            const response = await fetch(`${API}/auth/forgot-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: forgotEmail })
