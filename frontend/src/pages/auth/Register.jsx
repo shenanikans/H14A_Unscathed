@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 
+const API = import.meta.env.VITE_API_URL ?? '/atlas'
+
 export default function Register() {
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
@@ -30,7 +32,7 @@ export default function Register() {
             return
         }
 
-        const response = await fetch('/atlas/api/auth/register', {
+        const response = await fetch(`${API}/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, email, password, roles })
